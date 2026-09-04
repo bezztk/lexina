@@ -23,39 +23,47 @@
 
       <section id="words-view" class="view active">
         <div class="view-heading">
-          <div><p class="eyebrow">Persönlicher Wortschatz</p><h1>Wörter</h1></div>
+          <h1>Wörter</h1>
           <button class="primary" data-action="new-word">Wort hinzufügen</button>
         </div>
-        <form id="word-form" class="editor" hidden>
-          <input type="hidden" name="id" />
-          <label>Begriff<input name="term" required /></label>
-          <fieldset class="choice-field">
-            <legend>Wortart</legend>
-            <input type="hidden" name="partOfSpeech" value="noun" />
-            <div class="segmented" role="group" aria-label="Wortart">
-              <button type="button" class="active" data-part-of-speech="noun" aria-pressed="true">Nomen</button>
-              <button type="button" data-part-of-speech="verb" aria-pressed="false">Verb</button>
-              <button type="button" data-part-of-speech="adjective" aria-pressed="false">Adjektiv</button>
-            </div>
-          </fieldset>
-          <fieldset class="repeater-field">
-            <legend>Ähnliche Wörter</legend>
-            <div id="similar-words" class="repeater"></div>
-            <button type="button" class="add-row" data-add-row="similar-words"><span aria-hidden="true">+</span> Weiteres Wort</button>
-          </fieldset>
-          <fieldset class="repeater-field">
-            <legend>Beispielsätze</legend>
-            <div id="example-sentences" class="repeater"></div>
-            <button type="button" class="add-row" data-add-row="example-sentences"><span aria-hidden="true">+</span> Weiterer Satz</button>
-          </fieldset>
-          <label>Status<select name="status">
-            <option value="unknown">Unbekannt</option><option value="learning">Wird gelernt</option>
-            <option value="using">Wird benutzt</option><option value="familiar">Geläufig</option>
-          </select></label>
-          <div class="form-actions"><button class="primary" type="submit">Speichern</button><button type="button" data-action="cancel-word">Abbrechen</button></div>
-        </form>
         <div id="word-list" class="list"></div>
       </section>
+
+      <dialog id="word-dialog" aria-labelledby="word-dialog-title">
+        <form id="word-form" class="modal-form">
+          <header class="modal-header">
+            <h2 id="word-dialog-title">Wort hinzufügen</h2>
+            <button type="button" class="icon-button close-button" data-action="close-word" aria-label="Schließen">×</button>
+          </header>
+          <div class="modal-body">
+            <input type="hidden" name="id" />
+            <label>Begriff<input name="term" required /></label>
+            <fieldset class="choice-field">
+              <legend>Wortart</legend>
+              <input type="hidden" name="partOfSpeech" value="noun" />
+              <div class="segmented" role="group" aria-label="Wortart">
+                <button type="button" class="active" data-part-of-speech="noun" aria-pressed="true">Nomen</button>
+                <button type="button" data-part-of-speech="verb" aria-pressed="false">Verb</button>
+                <button type="button" data-part-of-speech="adjective" aria-pressed="false">Adjektiv</button>
+              </div>
+            </fieldset>
+            <fieldset class="repeater-field">
+              <legend>Ähnliche Wörter</legend>
+              <div id="similar-words" class="repeater"></div>
+              <button type="button" class="add-row" data-add-row="similar-words"><span aria-hidden="true">+</span> Weiteres Wort</button>
+            </fieldset>
+            <fieldset class="repeater-field">
+              <legend>Beispielsätze</legend>
+              <div id="example-sentences" class="repeater"></div>
+              <button type="button" class="add-row" data-add-row="example-sentences"><span aria-hidden="true">+</span> Weiterer Satz</button>
+            </fieldset>
+            <label>Status<select name="status">
+              <option value="unknown">Neu</option><option value="using">In Benutzung</option><option value="familiar">Geläufig</option>
+            </select></label>
+          </div>
+          <footer class="form-actions modal-footer"><button type="button" data-action="close-word">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>
+        </form>
+      </dialog>
 
       <section id="quotes-view" class="view">
         <div class="view-heading">

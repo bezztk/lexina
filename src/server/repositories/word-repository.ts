@@ -1,6 +1,6 @@
 import { db } from "../database/db.js";
 
-export const WORD_STATUSES = ["unknown", "learning", "using", "familiar"] as const;
+export const WORD_STATUSES = ["unknown", "using", "familiar"] as const;
 export type WordStatus = (typeof WORD_STATUSES)[number];
 export const PARTS_OF_SPEECH = ["noun", "verb", "adjective"] as const;
 export type PartOfSpeech = (typeof PARTS_OF_SPEECH)[number];
@@ -27,7 +27,7 @@ const selectAll = db.prepare(`
   SELECT id, term, part_of_speech AS partOfSpeech, status, created_at AS createdAt
   FROM words
   ORDER BY CASE status
-    WHEN 'learning' THEN 0 WHEN 'using' THEN 1 WHEN 'unknown' THEN 2 ELSE 3 END,
+    WHEN 'using' THEN 0 WHEN 'unknown' THEN 1 ELSE 2 END,
     created_at DESC
 `);
 

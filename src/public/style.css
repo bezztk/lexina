@@ -67,6 +67,27 @@ button {
 button:hover { border-color: #718c79; background: #f7faf8; }
 button.primary { border-color: #1c6942; background: #1c6942; color: #fff; }
 button.primary:hover { background: #145335; }
+
+dialog {
+  width: min(640px, calc(100% - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid #c6d0c9;
+  border-radius: 0.8rem;
+  background: #fff;
+  color: inherit;
+  box-shadow: 0 24px 70px rgba(19, 38, 27, 0.24);
+}
+dialog::backdrop { background: rgba(18, 27, 22, 0.5); }
+.modal-form { display: flex; max-height: calc(100vh - 2rem); flex-direction: column; }
+.modal-header, .modal-footer { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; }
+.modal-header { border-bottom: 1px solid #e0e5e1; }
+.modal-header h2 { margin: 0; }
+.modal-body { display: grid; gap: 1rem; padding: 1.25rem; overflow-y: auto; }
+.modal-footer { justify-content: flex-end; border-top: 1px solid #e0e5e1; }
+.icon-button { display: inline-grid; width: 2.35rem; height: 2.35rem; padding: 0; place-items: center; }
+.icon-button svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; pointer-events: none; }
+.close-button { border: 0; background: transparent; font-size: 1.55rem; line-height: 1; }
 button.danger { color: #9b392e; }
 
 .editor {
@@ -93,13 +114,16 @@ input, textarea, select {
 textarea { resize: vertical; line-height: 1.5; }
 input:focus, textarea:focus, select:focus { outline: 3px solid rgba(28, 105, 66, 0.15); border-color: #1c6942; }
 .form-actions, .card-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.segmented { display: flex; gap: 0.4rem; }
+.segmented { display: flex; }
 .segmented button { flex: 1; }
+.segmented button:not(:first-child) { margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.segmented button:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 .segmented button.active { border-color: #1c6942; background: #1c6942; color: #fff; }
 .repeater { display: grid; gap: 0.5rem; }
 .repeat-row { display: flex; align-items: start; gap: 0.5rem; }
 .repeat-row textarea { min-height: 4.5rem; }
-.remove-row { flex: 0 0 2.65rem; padding: 0.68rem; color: #9b392e; font-size: 1.15rem; }
+.remove-row { flex: 0 0 2.65rem; height: 2.65rem; padding: 0.68rem; color: #9b392e; }
+.remove-row svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; pointer-events: none; }
 .add-row { margin-top: 0.55rem; border-style: dashed; color: #1c6942; }
 .add-row span { font-size: 1.15rem; font-weight: 700; }
 
@@ -118,6 +142,12 @@ input:focus, textarea:focus, select:focus { outline: 3px solid rgba(28, 105, 66,
 .card-main p { margin-bottom: 0; color: #5a665e; line-height: 1.5; white-space: pre-wrap; }
 .card-main .type { margin-bottom: 0.2rem; color: #28714d; }
 .examples { margin: 0.75rem 0 0; padding-left: 1.2rem; color: #49574e; line-height: 1.55; }
+.word-card { position: relative; align-items: start; padding: 0.9rem 5rem 0.9rem 1rem; }
+.word-card h2 { font-size: 1.1rem; }
+.word-card .type { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.7rem; }
+.word-actions { position: absolute; top: 0.7rem; right: 0.7rem; display: flex; gap: 0.25rem; }
+.word-actions .icon-button { width: 2rem; height: 2rem; border-color: transparent; background: transparent; }
+.word-actions .icon-button:hover { border-color: #cbd5ce; background: #f3f6f4; }
 .card.muted { opacity: 0.62; }
 .compact { width: 9rem; }
 .compact select { padding: 0.55rem; }
@@ -141,6 +171,7 @@ blockquote { margin: 0 0 0.75rem; font-family: Georgia, serif; font-size: 1.15re
   .nav-button { padding: 0.85rem 0.7rem 0.7rem; white-space: nowrap; }
   main { padding-top: 2rem; }
   .view-heading, .card { align-items: stretch; flex-direction: column; }
+  .word-card { padding-right: 4.75rem; }
   .card-actions { justify-content: flex-start; }
   .compact { width: 100%; }
 }

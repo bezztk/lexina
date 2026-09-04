@@ -1,14 +1,13 @@
 const state = { words: [], quotes: [], journal: [] };
-const statusLabels = {
-  unknown: "Unbekannt",
-  learning: "Wird gelernt",
-  using: "Wird benutzt",
-  familiar: "Geläufig",
-};
 const partOfSpeechLabels = { noun: "Nomen", verb: "Verb", adjective: "Adjektiv" };
+const icons = {
+  trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Zm10-12 3 3"/></svg>',
+};
 
 const message = document.querySelector("#message");
 const wordForm = document.querySelector("#word-form");
+const wordDialog = document.querySelector("#word-dialog");
 const quoteForm = document.querySelector("#quote-form");
 const journalForm = document.querySelector("#journal-form");
 const journalDate = document.querySelector("#journal-date");
@@ -55,17 +54,15 @@ async function loadWords() {
   try {
     state.words = await api("/api/words");
     document.querySelector("#word-list").innerHTML = state.words.length ? state.words.map((word) => `
-      <article class="card ${word.status === "familiar" ? "muted" : ""}">
+      <article class="card word-card ${word.status === "familiar" ? "muted" : ""}">
         <div class="card-main">
           <p class="type">${partOfSpeechLabels[word.partOfSpeech]}</p><h2>${escapeHtml(word.term)}</h2>
           ${word.similarWords.length ? `<p><strong>Ähnlich:</strong> ${word.similarWords.map(escapeHtml).join(", ")}</p>` : ""}
           ${word.exampleSentences.length ? `<ul class="examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
         </div>
-        <div class="card-actions">
-          <label class="compact">Status<select data-word-status="${word.id}">
-            ${Object.entries(statusLabels).map(([value, label]) => `<option value="${value}" ${word.status === value ? "selected" : ""}>${label}</option>`).join("")}
-          </select></label>
-          <button data-edit-word="${word.id}">Bearbeiten</button><button class="danger" data-delete-word="${word.id}">Entfernen</button>
+        <div class="word-actions">
+          <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>
+          <button class="icon-button" data-edit-word="${word.id}" aria-label="${escapeHtml(word.term)} bearbeiten">${icons.pencil}</button>
         </div>
       </article>`).join("") : empty("Noch keine Wörter gespeichert.");
   } catch { notify("Wörter konnten nicht geladen werden."); }
@@ -94,9 +91,16 @@ function addRepeaterRow(containerId, value = "") {
   remove.className = "remove-row";
   remove.dataset.removeRow = containerId;
   remove.setAttribute("aria-label", "Feld entfernen");
-  remove.textContent = "−";
+  remove.innerHTML = icons.trash;
   row.append(field, remove);
   container.append(row);
+  updateRepeaterButtons(container);
+}
+
+function updateRepeaterButtons(container) {
+  container.querySelectorAll(".remove-row").forEach((button, index) => {
+    button.hidden = index === 0;
+  });
 }
 
 function fillRepeater(containerId, values) {
@@ -105,14 +109,20 @@ function fillRepeater(containerId, values) {
 }
 
 function openWordForm(word) {
-  wordForm.hidden = false;
+  document.querySelector("#word-dialog-title").textContent = word ? "Wort bearbeiten" : "Wort hinzufügen";
   wordForm.elements.id.value = word?.id ?? "";
   wordForm.elements.term.value = word?.term ?? "";
   wordForm.elements.status.value = word?.status ?? "unknown";
   setPartOfSpeech(word?.partOfSpeech ?? "noun");
   fillRepeater("similar-words", word?.similarWords ?? []);
   fillRepeater("example-sentences", word?.exampleSentences ?? []);
+  wordDialog.showModal();
   wordForm.elements.term.focus();
+}
+
+function closeWordForm() {
+  wordDialog.close();
+  wordForm.reset();
 }
 
 wordForm.addEventListener("submit", async (event) => {
@@ -123,7 +133,7 @@ wordForm.addEventListener("submit", async (event) => {
   data.exampleSentences = [...document.querySelectorAll("#example-sentences textarea")].map((field) => field.value);
   try {
     await api(id ? `/api/words/${id}` : "/api/words", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
-    wordForm.hidden = true; wordForm.reset(); await loadWords(); notify("Wort gespeichert.");
+    closeWordForm(); await loadWords(); notify("Wort gespeichert.");
   } catch { notify("Wort konnte nicht gespeichert werden."); }
 });
 
@@ -201,7 +211,7 @@ document.addEventListener("click", async (event) => {
   if (!button) return;
   if (button.dataset.view) showView(button.dataset.view);
   if (button.dataset.action === "new-word") openWordForm();
-  if (button.dataset.action === "cancel-word") { wordForm.hidden = true; wordForm.reset(); }
+  if (button.dataset.action === "close-word") closeWordForm();
   if (button.dataset.action === "new-quote") openQuoteForm();
   if (button.dataset.action === "cancel-quote") { quoteForm.hidden = true; quoteForm.reset(); }
   if (button.dataset.action === "cancel-journal") resetJournalForm();
@@ -211,7 +221,7 @@ document.addEventListener("click", async (event) => {
     const containerId = button.dataset.removeRow;
     const container = document.querySelector(`#${containerId}`);
     button.closest(".repeat-row").remove();
-    if (!container.children.length) addRepeaterRow(containerId);
+    updateRepeaterButtons(container);
   }
 
   const word = state.words.find((item) => item.id === Number(button.dataset.editWord));
@@ -238,15 +248,8 @@ document.addEventListener("click", async (event) => {
   }
 });
 
-document.addEventListener("change", async (event) => {
-  const select = event.target.closest("[data-word-status]");
-  if (select) {
-    const word = state.words.find((item) => item.id === Number(select.dataset.wordStatus));
-    if (word) {
-      try { await api(`/api/words/${word.id}`, { method: "PUT", body: JSON.stringify({ ...word, status: select.value }) }); await loadWords(); }
-      catch { notify("Status konnte nicht geändert werden."); }
-    }
-  }
+wordDialog.addEventListener("click", (event) => {
+  if (event.target === wordDialog) closeWordForm();
 });
 
 document.querySelectorAll(".nav-button").forEach((button) => button.addEventListener("click", () => { location.hash = button.dataset.view; }));

@@ -25,7 +25,7 @@ db.exec(`
     part_of_speech TEXT NOT NULL DEFAULT 'noun'
       CHECK (part_of_speech IN ('noun', 'verb', 'adjective')),
     status TEXT NOT NULL DEFAULT 'unknown'
-      CHECK (status IN ('unknown', 'learning', 'using', 'familiar')),
+      CHECK (status IN ('unknown', 'using', 'familiar')),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   );
 `);
@@ -38,6 +38,7 @@ if (!wordColumns.some(({ name }) => name === "part_of_speech")) {
 if (wordColumns.some(({ name }) => name === "note")) {
   db.exec("ALTER TABLE words DROP COLUMN note");
 }
+db.prepare("UPDATE words SET status = 'unknown' WHERE status = 'learning'").run();
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS similar_words (

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Persönlicher Wortschatz, Zitate und Journal" />
+    <title>Lexina</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a class="brand" href="#words">Lexina</a>
+      <nav aria-label="Bereiche">
+        <button class="nav-button active" data-view="words">Wörter</button>
+        <button class="nav-button" data-view="quotes">Zitate &amp; Gedichte</button>
+        <button class="nav-button" data-view="journal">Journal</button>
+      </nav>
+    </header>
+
+    <main>
+      <p id="message" class="message" aria-live="polite" hidden></p>
+
+      <section id="words-view" class="view active">
+        <div class="view-heading">
+          <div><p class="eyebrow">Persönlicher Wortschatz</p><h1>Wörter</h1></div>
+          <button class="primary" data-action="new-word">Wort hinzufügen</button>
+        </div>
+        <form id="word-form" class="editor" hidden>
+          <input type="hidden" name="id" />
+          <label>Begriff<input name="term" required /></label>
+          <label>Notiz<textarea name="note" rows="3"></textarea></label>
+          <label>Status<select name="status">
+            <option value="unknown">Unbekannt</option><option value="learning">Wird gelernt</option>
+            <option value="using">Wird benutzt</option><option value="familiar">Geläufig</option>
+          </select></label>
+          <div class="form-actions"><button class="primary" type="submit">Speichern</button><button type="button" data-action="cancel-word">Abbrechen</button></div>
+        </form>
+        <div id="word-list" class="list"></div>
+      </section>
+
+      <section id="quotes-view" class="view">
+        <div class="view-heading">
+          <div><p class="eyebrow">Gesammelte Texte</p><h1>Zitate &amp; Gedichte</h1></div>
+          <button class="primary" data-action="new-quote">Eintrag hinzufügen</button>
+        </div>
+        <form id="quote-form" class="editor" hidden>
+          <input type="hidden" name="id" />
+          <label>Typ<select name="type"><option value="quote">Zitat</option><option value="poem">Gedicht</option></select></label>
+          <label>Inhalt<textarea name="content" rows="6" required></textarea></label>
+          <label>Tags<input name="tags" placeholder="philosophie, sprache" list="known-tags" /></label>
+          <datalist id="known-tags"></datalist>
+          <label>Notiz<textarea name="note" rows="3"></textarea></label>
+          <div class="form-actions"><button class="primary" type="submit">Speichern</button><button type="button" data-action="cancel-quote">Abbrechen</button></div>
+        </form>
+        <div id="quote-list" class="list"></div>
+      </section>
+
+      <section id="journal-view" class="view">
+        <div class="view-heading">
+          <div><p class="eyebrow">Tagebuch</p><h1>Journal</h1></div>
+          <label class="date-picker">Tag<input id="journal-date" type="date" /></label>
+        </div>
+        <form id="journal-form" class="editor">
+          <input type="hidden" name="id" />
+          <label>Zeitpunkt<input name="entryAt" type="datetime-local" required /></label>
+          <label>Eintrag<textarea name="content" rows="5" required></textarea></label>
+          <div class="form-actions"><button class="primary" type="submit">Speichern</button><button type="button" data-action="cancel-journal" hidden>Abbrechen</button></div>
+        </form>
+        <div id="journal-list" class="list timeline"></div>
+      </section>
+    </main>
+  </body>
+</html>

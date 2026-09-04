@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "Node16",
+    "moduleResolution": "Node16",
 
     "types": ["node"],
 
+    "rootDir": ".",
     "outDir": "./dist",
 
     "strict": true,
@@ -13,7 +14,7 @@
     "exactOptionalPropertyTypes": true,
 
     "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
 
     "sourceMap": true,
 
@@ -21,6 +22,6 @@
     "forceConsistentCasingInFileNames": true
   },
 
-  "include": ["./**/*.ts"],
+  "include": ["./server/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

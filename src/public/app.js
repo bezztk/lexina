@@ -1,0 +1,207 @@
+const state = { words: [], quotes: [], journal: [] };
+const statusLabels = {
+  unknown: "Unbekannt",
+  learning: "Wird gelernt",
+  using: "Wird benutzt",
+  familiar: "Geläufig",
+};
+
+const message = document.querySelector("#message");
+const wordForm = document.querySelector("#word-form");
+const quoteForm = document.querySelector("#quote-form");
+const journalForm = document.querySelector("#journal-form");
+const journalDate = document.querySelector("#journal-date");
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
+  })[character]);
+}
+
+function localDateTime(date = new Date()) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+async function api(url, options) {
+  const response = await fetch(url, options && {
+    ...options,
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!response.ok) throw new Error();
+  return response.status === 204 ? null : response.json();
+}
+
+function notify(text) {
+  message.textContent = text;
+  message.hidden = false;
+  window.setTimeout(() => { message.hidden = true; }, 2200);
+}
+
+function showView(name) {
+  document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${name}-view`));
+  document.querySelectorAll(".nav-button").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
+  if (name === "words") loadWords();
+  if (name === "quotes") loadQuotes();
+  if (name === "journal") loadJournal();
+}
+
+function empty(text) {
+  return `<p class="empty">${escapeHtml(text)}</p>`;
+}
+
+async function loadWords() {
+  try {
+    state.words = await api("/api/words");
+    document.querySelector("#word-list").innerHTML = state.words.length ? state.words.map((word) => `
+      <article class="card ${word.status === "familiar" ? "muted" : ""}">
+        <div class="card-main"><h2>${escapeHtml(word.term)}</h2>${word.note ? `<p>${escapeHtml(word.note)}</p>` : ""}</div>
+        <div class="card-actions">
+          <label class="compact">Status<select data-word-status="${word.id}">
+            ${Object.entries(statusLabels).map(([value, label]) => `<option value="${value}" ${word.status === value ? "selected" : ""}>${label}</option>`).join("")}
+          </select></label>
+          <button data-edit-word="${word.id}">Bearbeiten</button><button class="danger" data-delete-word="${word.id}">Entfernen</button>
+        </div>
+      </article>`).join("") : empty("Noch keine Wörter gespeichert.");
+  } catch { notify("Wörter konnten nicht geladen werden."); }
+}
+
+function openWordForm(word) {
+  wordForm.hidden = false;
+  wordForm.elements.id.value = word?.id ?? "";
+  wordForm.elements.term.value = word?.term ?? "";
+  wordForm.elements.note.value = word?.note ?? "";
+  wordForm.elements.status.value = word?.status ?? "unknown";
+  wordForm.elements.term.focus();
+}
+
+wordForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(wordForm));
+  const id = data.id;
+  try {
+    await api(id ? `/api/words/${id}` : "/api/words", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
+    wordForm.hidden = true; wordForm.reset(); await loadWords(); notify("Wort gespeichert.");
+  } catch { notify("Wort konnte nicht gespeichert werden."); }
+});
+
+async function loadQuotes() {
+  try {
+    [state.quotes] = await Promise.all([api("/api/quotes"), loadTags()]);
+    document.querySelector("#quote-list").innerHTML = state.quotes.length ? state.quotes.map((entry) => `
+      <article class="card text-card">
+        <div class="card-main"><p class="type">${entry.type === "quote" ? "Zitat" : "Gedicht"}</p><blockquote>${escapeHtml(entry.content)}</blockquote>
+          ${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+          ${entry.note ? `<p class="note">${escapeHtml(entry.note)}</p>` : ""}
+        </div>
+        <div class="card-actions"><button data-edit-quote="${entry.id}">Bearbeiten</button><button class="danger" data-delete-quote="${entry.id}">Löschen</button></div>
+      </article>`).join("") : empty("Noch keine Zitate oder Gedichte gespeichert.");
+  } catch { notify("Einträge konnten nicht geladen werden."); }
+}
+
+async function loadTags() {
+  const tags = await api("/api/tags");
+  document.querySelector("#known-tags").innerHTML = tags.map((tag) => `<option value="${escapeHtml(tag)}"></option>`).join("");
+}
+
+function openQuoteForm(entry) {
+  quoteForm.hidden = false;
+  quoteForm.elements.id.value = entry?.id ?? "";
+  quoteForm.elements.type.value = entry?.type ?? "quote";
+  quoteForm.elements.content.value = entry?.content ?? "";
+  quoteForm.elements.tags.value = entry?.tags.join(", ") ?? "";
+  quoteForm.elements.note.value = entry?.note ?? "";
+  quoteForm.elements.content.focus();
+}
+
+quoteForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(quoteForm));
+  const id = data.id;
+  data.tags = String(data.tags).split(",").map((tag) => tag.trim()).filter(Boolean);
+  try {
+    await api(id ? `/api/quotes/${id}` : "/api/quotes", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
+    quoteForm.hidden = true; quoteForm.reset(); await loadQuotes(); notify("Eintrag gespeichert.");
+  } catch { notify("Eintrag konnte nicht gespeichert werden."); }
+});
+
+async function loadJournal() {
+  try {
+    state.journal = await api(`/api/journal?date=${journalDate.value}`);
+    document.querySelector("#journal-list").innerHTML = state.journal.length ? state.journal.map((entry) => `
+      <article class="card journal-card">
+        <time datetime="${entry.entryAt}">${escapeHtml(entry.entryAt.slice(11, 16))}</time>
+        <div class="card-main"><p>${escapeHtml(entry.content)}</p></div>
+        <div class="card-actions"><button data-edit-journal="${entry.id}">Bearbeiten</button><button class="danger" data-delete-journal="${entry.id}">Löschen</button></div>
+      </article>`).join("") : empty("Für diesen Tag gibt es noch keinen Eintrag.");
+  } catch { notify("Journal konnte nicht geladen werden."); }
+}
+
+function resetJournalForm() {
+  journalForm.reset();
+  journalForm.elements.id.value = "";
+  journalForm.elements.entryAt.value = `${journalDate.value}T${localDateTime().slice(11)}`;
+  journalForm.querySelector('[data-action="cancel-journal"]').hidden = true;
+}
+
+journalForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(journalForm));
+  const id = data.id;
+  try {
+    await api(id ? `/api/journal/${id}` : "/api/journal", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
+    journalDate.value = String(data.entryAt).slice(0, 10); resetJournalForm(); await loadJournal(); notify("Journaleintrag gespeichert.");
+  } catch { notify("Journaleintrag konnte nicht gespeichert werden."); }
+});
+
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  if (button.dataset.view) showView(button.dataset.view);
+  if (button.dataset.action === "new-word") openWordForm();
+  if (button.dataset.action === "cancel-word") { wordForm.hidden = true; wordForm.reset(); }
+  if (button.dataset.action === "new-quote") openQuoteForm();
+  if (button.dataset.action === "cancel-quote") { quoteForm.hidden = true; quoteForm.reset(); }
+  if (button.dataset.action === "cancel-journal") resetJournalForm();
+
+  const word = state.words.find((item) => item.id === Number(button.dataset.editWord));
+  if (word) openWordForm(word);
+  const quote = state.quotes.find((item) => item.id === Number(button.dataset.editQuote));
+  if (quote) openQuoteForm(quote);
+  const journal = state.journal.find((item) => item.id === Number(button.dataset.editJournal));
+  if (journal) {
+    journalForm.elements.id.value = journal.id;
+    journalForm.elements.entryAt.value = journal.entryAt.slice(0, 16);
+    journalForm.elements.content.value = journal.content;
+    journalForm.querySelector('[data-action="cancel-journal"]').hidden = false;
+    journalForm.elements.content.focus();
+  }
+
+  for (const [key, endpoint, reload] of [
+    ["deleteWord", "words", loadWords], ["deleteQuote", "quotes", loadQuotes], ["deleteJournal", "journal", loadJournal],
+  ]) {
+    const id = button.dataset[key];
+    if (id && window.confirm("Eintrag wirklich löschen?")) {
+      try { await api(`/api/${endpoint}/${id}`, { method: "DELETE" }); await reload(); notify("Eintrag gelöscht."); }
+      catch { notify("Eintrag konnte nicht gelöscht werden."); }
+    }
+  }
+});
+
+document.addEventListener("change", async (event) => {
+  const select = event.target.closest("[data-word-status]");
+  if (select) {
+    const word = state.words.find((item) => item.id === Number(select.dataset.wordStatus));
+    if (word) {
+      try { await api(`/api/words/${word.id}`, { method: "PUT", body: JSON.stringify({ ...word, status: select.value }) }); await loadWords(); }
+      catch { notify("Status konnte nicht geändert werden."); }
+    }
+  }
+});
+
+document.querySelectorAll(".nav-button").forEach((button) => button.addEventListener("click", () => { location.hash = button.dataset.view; }));
+window.addEventListener("hashchange", () => showView(location.hash.slice(1) || "words"));
+journalDate.value = localDateTime().slice(0, 10);
+journalDate.addEventListener("change", () => { resetJournalForm(); loadJournal(); });
+resetJournalForm();
+showView(location.hash.slice(1) || "words");

@@ -1,5 +1,4 @@
 const state = { words: [], quotes: [], journal: [] };
-const partOfSpeechLabels = { noun: "Nomen", verb: "Verb", adjective: "Adjektiv" };
 const icons = {
   trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg>',
   pencil: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Zm10-12 3 3"/></svg>',
@@ -54,11 +53,13 @@ async function loadWords() {
   try {
     state.words = await api("/api/words");
     document.querySelector("#word-list").innerHTML = state.words.length ? state.words.map((word) => `
-      <article class="card word-card ${word.status === "familiar" ? "muted" : ""}">
+      <article class="card word-card ${word.status === "familiar" ? "muted" : ""}" tabindex="0">
         <div class="card-main">
-          <p class="type">${partOfSpeechLabels[word.partOfSpeech]}</p><h2>${escapeHtml(word.term)}</h2>
-          ${word.similarWords.length ? `<p><strong>Ähnlich:</strong> ${word.similarWords.map(escapeHtml).join(", ")}</p>` : ""}
-          ${word.exampleSentences.length ? `<ul class="examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
+          <div class="word-summary">
+            <h2>${escapeHtml(word.term)}</h2>
+            ${word.similarWords.length ? `<span class="word-separator" aria-hidden="true">·</span><span class="similar-words">${word.similarWords.map(escapeHtml).join(", ")}</span>` : ""}
+          </div>
+          ${word.exampleSentences.length ? `<ul class="hover-examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
         </div>
         <div class="word-actions">
           <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>

@@ -141,10 +141,14 @@ input:focus, textarea:focus, select:focus { outline: 3px solid rgba(28, 105, 66,
 .card-main { min-width: 0; flex: 1; }
 .card-main p { margin-bottom: 0; color: #5a665e; line-height: 1.5; white-space: pre-wrap; }
 .card-main .type { margin-bottom: 0.2rem; color: #28714d; }
-.examples { margin: 0.75rem 0 0; padding-left: 1.2rem; color: #49574e; line-height: 1.55; }
-.word-card { position: relative; align-items: start; padding: 0.9rem 5rem 0.9rem 1rem; }
-.word-card h2 { font-size: 1.1rem; }
-.word-card .type { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.7rem; }
+.word-card { position: relative; align-items: start; padding: 0.8rem 5rem 0.8rem 1rem; }
+.word-summary { display: flex; align-items: baseline; gap: 0.65rem; min-height: 2rem; }
+.word-card h2 { flex: 0 0 auto; margin: 0; font-size: 1.05rem; }
+.word-separator { color: #9ca9a1; font-weight: 700; }
+.similar-words { min-width: 0; flex: 1; overflow: hidden; color: #69766e; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+.hover-examples { display: none; margin: 0.65rem 0 0; padding: 0.65rem 0 0 1.2rem; border-top: 1px solid #e5e9e6; color: #49574e; font-size: 0.9rem; line-height: 1.55; }
+.word-card:hover .hover-examples, .word-card:focus .hover-examples, .word-card:focus-within .hover-examples { display: block; }
+.word-card:focus { outline: 2px solid #7fa58d; outline-offset: 2px; }
 .word-actions { position: absolute; top: 0.7rem; right: 0.7rem; display: flex; gap: 0.25rem; }
 .word-actions .icon-button { width: 2rem; height: 2rem; border-color: transparent; background: transparent; }
 .word-actions .icon-button:hover { border-color: #cbd5ce; background: #f3f6f4; }

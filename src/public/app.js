@@ -63,13 +63,15 @@ async function loadWords() {
           <div class="word-summary">
             <h2>${escapeHtml(word.term)}</h2>
             ${word.similarWords.length ? `<span class="word-separator" aria-hidden="true">·</span><span class="similar-words">${word.similarWords.map(escapeHtml).join(", ")}</span>` : ""}
-            <span class="status-label status-${word.status}">${word.status === "unknown" ? "Neu" : word.status === "using" ? "In Benutzung" : "Geläufig"}</span>
           </div>
           ${word.exampleSentences.length ? `<ul class="hover-examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
         </div>
-        <div class="word-actions">
-          <button class="icon-button" data-edit-word="${word.id}" aria-label="${escapeHtml(word.term)} bearbeiten">${icons.pencil}</button>
-          <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>
+        <div class="word-meta-actions">
+          <div class="word-actions">
+            <button class="icon-button" data-edit-word="${word.id}" aria-label="${escapeHtml(word.term)} bearbeiten">${icons.pencil}</button>
+            <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>
+          </div>
+          <span class="status-label status-${word.status}">${word.status === "unknown" ? "Neu" : word.status === "using" ? "In Benutzung" : "Geläufig"}</span>
         </div>
       </article>`).join("") : empty("Noch keine Wörter gespeichert.");
   } catch { notify("Wörter konnten nicht geladen werden."); }
@@ -148,12 +150,12 @@ async function loadQuotes() {
   try {
     [state.quotes] = await Promise.all([api("/api/quotes"), loadTags()]);
     document.querySelector("#quote-list").innerHTML = state.quotes.length ? state.quotes.map((entry) => `
-      <article class="card text-card">
-        <div class="card-main"><p class="type">${entry.type === "quote" ? "Zitat" : "Gedicht"}</p>
+      <article class="card text-card hover-card" tabindex="0">
+        <div class="card-main"><p class="type">${entry.type === "quote" ? "Zitat" : "Gedicht"}</p><blockquote>${escapeHtml(entry.content)}</blockquote>
           ${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
           ${entry.note ? `<p class="note">${escapeHtml(entry.note)}</p>` : ""}
         </div>
-        <div class="card-actions"><button data-edit-quote="${entry.id}">Bearbeiten</button><button class="danger" data-delete-quote="${entry.id}">Löschen</button></div>
+        <div class="card-hover-actions"><button class="icon-button" data-edit-quote="${entry.id}" aria-label="Eintrag bearbeiten">${icons.pencil}</button><button class="icon-button danger" data-delete-quote="${entry.id}" aria-label="Eintrag löschen">${icons.trash}</button></div>
       </article>`).join("") : empty("Noch keine Zitate oder Gedichte gespeichert.");
   } catch { notify("Einträge konnten nicht geladen werden."); }
 }
@@ -196,10 +198,10 @@ async function loadJournal() {
   try {
     state.journal = await api(`/api/journal?date=${journalDate.value}`);
     document.querySelector("#journal-list").innerHTML = state.journal.length ? state.journal.map((entry) => `
-      <article class="card journal-card">
+      <article class="card journal-card hover-card" tabindex="0">
         <time datetime="${entry.entryAt}">${escapeHtml(entry.entryAt.slice(11, 16))}</time>
         <div class="card-main"><p>${escapeHtml(entry.content)}</p></div>
-        <div class="card-actions"><button data-edit-journal="${entry.id}">Bearbeiten</button><button class="danger" data-delete-journal="${entry.id}">Löschen</button></div>
+        <div class="card-hover-actions"><button class="icon-button" data-edit-journal="${entry.id}" aria-label="Journaleintrag bearbeiten">${icons.pencil}</button><button class="icon-button danger" data-delete-journal="${entry.id}" aria-label="Journaleintrag löschen">${icons.trash}</button></div>
       </article>`).join("") : empty("Für diesen Tag gibt es noch keinen Eintrag.");
   } catch { notify("Journal konnte nicht geladen werden."); }
 }

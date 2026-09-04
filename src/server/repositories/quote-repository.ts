@@ -48,14 +48,12 @@ export function getQuote(id: number): Quote | null {
 
 function replaceTags(quoteId: number, tags: string[]): void {
   db.prepare("DELETE FROM quote_tags WHERE quote_id = ?").run(quoteId);
-  const insertTag = db.prepare("INSERT INTO tags (name) VALUES (?) ON CONFLICT(name) DO NOTHING");
   const findTag = db.prepare<string>("SELECT id FROM tags WHERE name = ? COLLATE NOCASE");
   const linkTag = db.prepare("INSERT INTO quote_tags (quote_id, tag_id) VALUES (?, ?)");
 
   for (const name of [...new Set(tags)]) {
-    insertTag.run(name);
-    const tag = findTag.get(name) as { id: number };
-    linkTag.run(quoteId, tag.id);
+    const tag = findTag.get(name) as { id: number } | undefined;
+    if (tag) linkTag.run(quoteId, tag.id);
   }
 }
 
@@ -81,7 +79,20 @@ export function deleteQuote(id: number): boolean {
   return db.prepare("DELETE FROM quotes WHERE id = ?").run(id).changes > 0;
 }
 
-export function listTags(): string[] {
-  return (db.prepare("SELECT name FROM tags ORDER BY name COLLATE NOCASE").all() as { name: string }[])
-    .map(({ name }) => name);
+export interface Tag {
+  id: number;
+  name: string;
+}
+
+export function listTags(): Tag[] {
+  return db.prepare("SELECT id, name FROM tags ORDER BY name COLLATE NOCASE").all() as Tag[];
+}
+
+export function createTag(name: string): Tag {
+  db.prepare("INSERT INTO tags (name) VALUES (?) ON CONFLICT(name) DO NOTHING").run(name);
+  return db.prepare<string>("SELECT id, name FROM tags WHERE name = ? COLLATE NOCASE").get(name) as Tag;
+}
+
+export function deleteTag(id: number): boolean {
+  return db.prepare("DELETE FROM tags WHERE id = ?").run(id).changes > 0;
 }

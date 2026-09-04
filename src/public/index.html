@@ -15,6 +15,7 @@
         <button class="nav-button active" data-view="words">Wörter</button>
         <button class="nav-button" data-view="quotes">Zitate &amp; Gedichte</button>
         <button class="nav-button" data-view="journal">Journal</button>
+        <button class="nav-button" data-view="settings">Verwaltung</button>
       </nav>
     </header>
 
@@ -67,34 +68,59 @@
 
       <section id="quotes-view" class="view">
         <div class="view-heading">
-          <div><p class="eyebrow">Gesammelte Texte</p><h1>Zitate &amp; Gedichte</h1></div>
+          <h1>Zitate &amp; Gedichte</h1>
           <button class="primary" data-action="new-quote">Eintrag hinzufügen</button>
         </div>
-        <form id="quote-form" class="editor" hidden>
-          <input type="hidden" name="id" />
-          <label>Typ<select name="type"><option value="quote">Zitat</option><option value="poem">Gedicht</option></select></label>
-          <label>Inhalt<textarea name="content" rows="6" required></textarea></label>
-          <label>Tags<input name="tags" placeholder="philosophie, sprache" list="known-tags" /></label>
-          <datalist id="known-tags"></datalist>
-          <label>Notiz<textarea name="note" rows="3"></textarea></label>
-          <div class="form-actions"><button class="primary" type="submit">Speichern</button><button type="button" data-action="cancel-quote">Abbrechen</button></div>
-        </form>
         <div id="quote-list" class="list"></div>
       </section>
 
+      <dialog id="quote-dialog" aria-labelledby="quote-dialog-title">
+        <form id="quote-form" class="modal-form">
+          <header class="modal-header"><h2 id="quote-dialog-title">Eintrag hinzufügen</h2><button type="button" class="icon-button close-button" data-action="close-quote" aria-label="Schließen">×</button></header>
+          <div class="modal-body">
+            <input type="hidden" name="id" />
+            <label>Typ<select name="type"><option value="quote">Zitat</option><option value="poem">Gedicht</option></select></label>
+            <label>Inhalt<textarea name="content" rows="6" required></textarea></label>
+            <fieldset><legend>Tags</legend><div id="quote-tags" class="tag-options"></div></fieldset>
+            <label>Notiz<textarea name="note" rows="3"></textarea></label>
+          </div>
+          <footer class="form-actions modal-footer"><button type="button" data-action="close-quote">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>
+        </form>
+      </dialog>
+
       <section id="journal-view" class="view">
         <div class="view-heading">
-          <div><p class="eyebrow">Tagebuch</p><h1>Journal</h1></div>
-          <label class="date-picker">Tag<input id="journal-date" type="date" /></label>
+          <h1>Journal</h1>
+          <div class="heading-actions"><label class="date-picker">Tag<input id="journal-date" type="date" /></label><button class="primary" data-action="new-journal">Eintrag hinzufügen</button></div>
         </div>
-        <form id="journal-form" class="editor">
-          <input type="hidden" name="id" />
-          <label>Zeitpunkt<input name="entryAt" type="datetime-local" required /></label>
-          <label>Eintrag<textarea name="content" rows="5" required></textarea></label>
-          <div class="form-actions"><button class="primary" type="submit">Speichern</button><button type="button" data-action="cancel-journal" hidden>Abbrechen</button></div>
-        </form>
         <div id="journal-list" class="list timeline"></div>
       </section>
+
+      <dialog id="journal-dialog" aria-labelledby="journal-dialog-title">
+        <form id="journal-form" class="modal-form">
+          <header class="modal-header"><h2 id="journal-dialog-title">Journaleintrag hinzufügen</h2><button type="button" class="icon-button close-button" data-action="close-journal" aria-label="Schließen">×</button></header>
+          <div class="modal-body">
+            <input type="hidden" name="id" />
+            <label>Zeitpunkt<input name="entryAt" type="datetime-local" required /></label>
+            <label>Eintrag<textarea name="content" rows="5" required></textarea></label>
+          </div>
+          <footer class="form-actions modal-footer"><button type="button" data-action="close-journal">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>
+        </form>
+      </dialog>
+
+      <section id="settings-view" class="view">
+        <div class="view-heading"><h1>Verwaltung</h1><button class="primary" data-action="new-tag">Tag hinzufügen</button></div>
+        <h2 class="section-title">Tags</h2>
+        <div id="tag-list" class="tag-list"></div>
+      </section>
+
+      <dialog id="tag-dialog" aria-labelledby="tag-dialog-title">
+        <form id="tag-form" class="modal-form">
+          <header class="modal-header"><h2 id="tag-dialog-title">Tag hinzufügen</h2><button type="button" class="icon-button close-button" data-action="close-tag" aria-label="Schließen">×</button></header>
+          <div class="modal-body"><label>Name<input name="name" required /></label></div>
+          <footer class="form-actions modal-footer"><button type="button" data-action="close-tag">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>
+        </form>
+      </dialog>
     </main>
   </body>
 </html>

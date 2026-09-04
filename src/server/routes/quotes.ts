@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
   createQuote,
+  createTag,
   deleteQuote,
+  deleteTag,
   listQuotes,
   listTags,
   updateQuote,
@@ -47,3 +49,15 @@ quotesRouter.delete("/:id", (request, response) => {
 });
 
 tagsRouter.get("/", (_request, response) => response.json(listTags()));
+
+tagsRouter.post("/", (request, response) => {
+  const name = typeof request.body?.name === "string" ? request.body.name.trim() : "";
+  if (!name) return response.status(400).json({ error: "Tag-Name fehlt." });
+  return response.status(201).json(createTag(name));
+});
+
+tagsRouter.delete("/:id", (request, response) => {
+  const id = Number(request.params.id);
+  if (!Number.isInteger(id)) return response.status(400).json({ error: "Ungültige ID." });
+  return deleteTag(id) ? response.status(204).end() : response.status(404).json({ error: "Tag nicht gefunden." });
+});

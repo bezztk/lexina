@@ -1,4 +1,4 @@
-const state = { words: [], quotes: [], journal: [] };
+const state = { words: [], quotes: [], journal: [], tags: [] };
 const icons = {
   trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg>',
   pencil: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Zm10-12 3 3"/></svg>',
@@ -8,8 +8,12 @@ const message = document.querySelector("#message");
 const wordForm = document.querySelector("#word-form");
 const wordDialog = document.querySelector("#word-dialog");
 const quoteForm = document.querySelector("#quote-form");
+const quoteDialog = document.querySelector("#quote-dialog");
 const journalForm = document.querySelector("#journal-form");
+const journalDialog = document.querySelector("#journal-dialog");
 const journalDate = document.querySelector("#journal-date");
+const tagForm = document.querySelector("#tag-form");
+const tagDialog = document.querySelector("#tag-dialog");
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -43,6 +47,7 @@ function showView(name) {
   if (name === "words") loadWords();
   if (name === "quotes") loadQuotes();
   if (name === "journal") loadJournal();
+  if (name === "settings") loadTags();
 }
 
 function empty(text) {
@@ -58,12 +63,13 @@ async function loadWords() {
           <div class="word-summary">
             <h2>${escapeHtml(word.term)}</h2>
             ${word.similarWords.length ? `<span class="word-separator" aria-hidden="true">·</span><span class="similar-words">${word.similarWords.map(escapeHtml).join(", ")}</span>` : ""}
+            <span class="status-label status-${word.status}">${word.status === "unknown" ? "Neu" : word.status === "using" ? "In Benutzung" : "Geläufig"}</span>
           </div>
           ${word.exampleSentences.length ? `<ul class="hover-examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
         </div>
         <div class="word-actions">
-          <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>
           <button class="icon-button" data-edit-word="${word.id}" aria-label="${escapeHtml(word.term)} bearbeiten">${icons.pencil}</button>
+          <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>
         </div>
       </article>`).join("") : empty("Noch keine Wörter gespeichert.");
   } catch { notify("Wörter konnten nicht geladen werden."); }
@@ -143,7 +149,7 @@ async function loadQuotes() {
     [state.quotes] = await Promise.all([api("/api/quotes"), loadTags()]);
     document.querySelector("#quote-list").innerHTML = state.quotes.length ? state.quotes.map((entry) => `
       <article class="card text-card">
-        <div class="card-main"><p class="type">${entry.type === "quote" ? "Zitat" : "Gedicht"}</p><blockquote>${escapeHtml(entry.content)}</blockquote>
+        <div class="card-main"><p class="type">${entry.type === "quote" ? "Zitat" : "Gedicht"}</p>
           ${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
           ${entry.note ? `<p class="note">${escapeHtml(entry.note)}</p>` : ""}
         </div>
@@ -153,28 +159,36 @@ async function loadQuotes() {
 }
 
 async function loadTags() {
-  const tags = await api("/api/tags");
-  document.querySelector("#known-tags").innerHTML = tags.map((tag) => `<option value="${escapeHtml(tag)}"></option>`).join("");
+  state.tags = await api("/api/tags");
+  const tagList = document.querySelector("#tag-list");
+  tagList.innerHTML = state.tags.length ? state.tags.map((tag) => `
+    <div class="managed-tag"><span>${escapeHtml(tag.name)}</span><button class="icon-button danger" data-delete-tag="${tag.id}" aria-label="${escapeHtml(tag.name)} löschen">${icons.trash}</button></div>
+  `).join("") : empty("Noch keine Tags angelegt.");
 }
 
 function openQuoteForm(entry) {
-  quoteForm.hidden = false;
+  document.querySelector("#quote-dialog-title").textContent = entry ? "Eintrag bearbeiten" : "Eintrag hinzufügen";
   quoteForm.elements.id.value = entry?.id ?? "";
   quoteForm.elements.type.value = entry?.type ?? "quote";
   quoteForm.elements.content.value = entry?.content ?? "";
-  quoteForm.elements.tags.value = entry?.tags.join(", ") ?? "";
   quoteForm.elements.note.value = entry?.note ?? "";
+  document.querySelector("#quote-tags").innerHTML = state.tags.length ? state.tags.map((tag) => `
+    <label class="tag-choice"><input type="checkbox" value="${escapeHtml(tag.name)}" ${entry?.tags.includes(tag.name) ? "checked" : ""} /><span>${escapeHtml(tag.name)}</span></label>
+  `).join("") : '<p class="empty compact-empty">Lege zuerst Tags in der Verwaltung an.</p>';
+  quoteDialog.showModal();
   quoteForm.elements.content.focus();
 }
+
+function closeQuoteForm() { quoteDialog.close(); quoteForm.reset(); }
 
 quoteForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(quoteForm));
   const id = data.id;
-  data.tags = String(data.tags).split(",").map((tag) => tag.trim()).filter(Boolean);
+  data.tags = [...document.querySelectorAll("#quote-tags input:checked")].map((input) => input.value);
   try {
     await api(id ? `/api/quotes/${id}` : "/api/quotes", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
-    quoteForm.hidden = true; quoteForm.reset(); await loadQuotes(); notify("Eintrag gespeichert.");
+    closeQuoteForm(); await loadQuotes(); notify("Eintrag gespeichert.");
   } catch { notify("Eintrag konnte nicht gespeichert werden."); }
 });
 
@@ -194,8 +208,21 @@ function resetJournalForm() {
   journalForm.reset();
   journalForm.elements.id.value = "";
   journalForm.elements.entryAt.value = `${journalDate.value}T${localDateTime().slice(11)}`;
-  journalForm.querySelector('[data-action="cancel-journal"]').hidden = true;
 }
+
+function openJournalForm(entry) {
+  resetJournalForm();
+  document.querySelector("#journal-dialog-title").textContent = entry ? "Journaleintrag bearbeiten" : "Journaleintrag hinzufügen";
+  if (entry) {
+    journalForm.elements.id.value = entry.id;
+    journalForm.elements.entryAt.value = entry.entryAt.slice(0, 16);
+    journalForm.elements.content.value = entry.content;
+  }
+  journalDialog.showModal();
+  journalForm.elements.content.focus();
+}
+
+function closeJournalForm() { journalDialog.close(); resetJournalForm(); }
 
 journalForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -203,8 +230,17 @@ journalForm.addEventListener("submit", async (event) => {
   const id = data.id;
   try {
     await api(id ? `/api/journal/${id}` : "/api/journal", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
-    journalDate.value = String(data.entryAt).slice(0, 10); resetJournalForm(); await loadJournal(); notify("Journaleintrag gespeichert.");
+    journalDate.value = String(data.entryAt).slice(0, 10); closeJournalForm(); await loadJournal(); notify("Journaleintrag gespeichert.");
   } catch { notify("Journaleintrag konnte nicht gespeichert werden."); }
+});
+
+tagForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(tagForm));
+  try {
+    await api("/api/tags", { method: "POST", body: JSON.stringify(data) });
+    tagDialog.close(); tagForm.reset(); await loadTags(); notify("Tag gespeichert.");
+  } catch { notify("Tag konnte nicht gespeichert werden."); }
 });
 
 document.addEventListener("click", async (event) => {
@@ -214,8 +250,11 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.action === "new-word") openWordForm();
   if (button.dataset.action === "close-word") closeWordForm();
   if (button.dataset.action === "new-quote") openQuoteForm();
-  if (button.dataset.action === "cancel-quote") { quoteForm.hidden = true; quoteForm.reset(); }
-  if (button.dataset.action === "cancel-journal") resetJournalForm();
+  if (button.dataset.action === "close-quote") closeQuoteForm();
+  if (button.dataset.action === "new-journal") openJournalForm();
+  if (button.dataset.action === "close-journal") closeJournalForm();
+  if (button.dataset.action === "new-tag") { tagDialog.showModal(); tagForm.elements.name.focus(); }
+  if (button.dataset.action === "close-tag") { tagDialog.close(); tagForm.reset(); }
   if (button.dataset.partOfSpeech) setPartOfSpeech(button.dataset.partOfSpeech);
   if (button.dataset.addRow) addRepeaterRow(button.dataset.addRow);
   if (button.dataset.removeRow) {
@@ -230,16 +269,10 @@ document.addEventListener("click", async (event) => {
   const quote = state.quotes.find((item) => item.id === Number(button.dataset.editQuote));
   if (quote) openQuoteForm(quote);
   const journal = state.journal.find((item) => item.id === Number(button.dataset.editJournal));
-  if (journal) {
-    journalForm.elements.id.value = journal.id;
-    journalForm.elements.entryAt.value = journal.entryAt.slice(0, 16);
-    journalForm.elements.content.value = journal.content;
-    journalForm.querySelector('[data-action="cancel-journal"]').hidden = false;
-    journalForm.elements.content.focus();
-  }
+  if (journal) openJournalForm(journal);
 
   for (const [key, endpoint, reload] of [
-    ["deleteWord", "words", loadWords], ["deleteQuote", "quotes", loadQuotes], ["deleteJournal", "journal", loadJournal],
+    ["deleteWord", "words", loadWords], ["deleteQuote", "quotes", loadQuotes], ["deleteJournal", "journal", loadJournal], ["deleteTag", "tags", loadTags],
   ]) {
     const id = button.dataset[key];
     if (id && window.confirm("Eintrag wirklich löschen?")) {
@@ -252,6 +285,9 @@ document.addEventListener("click", async (event) => {
 wordDialog.addEventListener("click", (event) => {
   if (event.target === wordDialog) closeWordForm();
 });
+quoteDialog.addEventListener("click", (event) => { if (event.target === quoteDialog) closeQuoteForm(); });
+journalDialog.addEventListener("click", (event) => { if (event.target === journalDialog) closeJournalForm(); });
+tagDialog.addEventListener("click", (event) => { if (event.target === tagDialog) { tagDialog.close(); tagForm.reset(); } });
 
 document.querySelectorAll(".nav-button").forEach((button) => button.addEventListener("click", () => { location.hash = button.dataset.view; }));
 window.addEventListener("hashchange", () => showView(location.hash.slice(1) || "words"));

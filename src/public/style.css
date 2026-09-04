@@ -141,15 +141,20 @@ input:focus, textarea:focus, select:focus { outline: 3px solid rgba(28, 105, 66,
 .card-main { min-width: 0; flex: 1; }
 .card-main p { margin-bottom: 0; color: #5a665e; line-height: 1.5; white-space: pre-wrap; }
 .card-main .type { margin-bottom: 0.2rem; color: #28714d; }
-.word-card { position: relative; align-items: start; padding: 0.8rem 5rem 0.8rem 1rem; }
-.word-summary { display: flex; align-items: baseline; gap: 0.65rem; min-height: 2rem; }
+.word-card { position: relative; align-items: center; padding: 0.8rem 5rem 0.8rem 1rem; }
+.word-summary { display: flex; align-items: center; gap: 0.65rem; min-height: 2rem; }
 .word-card h2 { flex: 0 0 auto; margin: 0; font-size: 1.05rem; }
 .word-separator { color: #9ca9a1; font-weight: 700; }
 .similar-words { min-width: 0; flex: 1; overflow: hidden; color: #69766e; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+.status-label { flex: 0 0 auto; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.72rem; font-weight: 700; }
+.status-unknown { background: #fff0d8; color: #9a4f00; }
+.status-using { background: #e3eefc; color: #285f9d; }
+.status-familiar { background: #e1f2e8; color: #237047; }
 .hover-examples { display: none; margin: 0.65rem 0 0; padding: 0.65rem 0 0 1.2rem; border-top: 1px solid #e5e9e6; color: #49574e; font-size: 0.9rem; line-height: 1.55; }
 .word-card:hover .hover-examples, .word-card:focus .hover-examples, .word-card:focus-within .hover-examples { display: block; }
 .word-card:focus { outline: 2px solid #7fa58d; outline-offset: 2px; }
-.word-actions { position: absolute; top: 0.7rem; right: 0.7rem; display: flex; gap: 0.25rem; }
+.word-actions { position: absolute; top: 50%; right: 0.7rem; display: flex; gap: 0.25rem; opacity: 0; pointer-events: none; transform: translateY(-50%); }
+.word-card:hover .word-actions, .word-card:focus-within .word-actions { opacity: 1; pointer-events: auto; }
 .word-actions .icon-button { width: 2rem; height: 2rem; border-color: transparent; background: transparent; }
 .word-actions .icon-button:hover { border-color: #cbd5ce; background: #f3f6f4; }
 .card.muted { opacity: 0.62; }
@@ -163,11 +168,21 @@ blockquote { margin: 0 0 0.75rem; font-family: Georgia, serif; font-size: 1.15re
 .note { padding-top: 0.65rem; border-top: 1px solid #e1e6e2; }
 
 .date-picker { min-width: 10rem; }
+.heading-actions { display: flex; align-items: end; gap: 0.75rem; }
 .timeline .journal-card { position: relative; align-items: start; }
 .journal-card time { min-width: 3rem; padding-top: 0.1rem; color: #247149; font-weight: 750; }
 .journal-card .card-main p { color: #27342c; }
 .empty { padding: 2.5rem 1rem; border: 1px dashed #c8d0ca; border-radius: 0.65rem; color: #6c776f; text-align: center; }
 .message { position: fixed; right: 1rem; bottom: 1rem; z-index: 4; margin: 0; padding: 0.75rem 1rem; border-radius: 0.5rem; background: #173d2a; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+.tag-options, .tag-list { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+.tag-choice { position: relative; display: block; cursor: pointer; }
+.tag-choice input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.tag-choice span, .managed-tag { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.7rem; border: 1px solid #c8d2cb; border-radius: 2rem; background: #fff; color: #425148; }
+.tag-choice input:checked + span { border-color: #1c6942; background: #e2f0e7; color: #155235; }
+.tag-choice input:focus-visible + span { outline: 3px solid rgba(28, 105, 66, 0.15); }
+.managed-tag .icon-button { width: 1.7rem; height: 1.7rem; border: 0; background: transparent; }
+.section-title { margin-bottom: 1rem; }
+.compact-empty { width: 100%; margin: 0; padding: 1rem; }
 
 @media (max-width: 700px) {
   .app-header { align-items: stretch; flex-direction: column; gap: 0; padding: 0.75rem 1rem 0; }
@@ -175,6 +190,7 @@ blockquote { margin: 0 0 0.75rem; font-family: Georgia, serif; font-size: 1.15re
   .nav-button { padding: 0.85rem 0.7rem 0.7rem; white-space: nowrap; }
   main { padding-top: 2rem; }
   .view-heading, .card { align-items: stretch; flex-direction: column; }
+  .heading-actions { align-items: stretch; flex-direction: column; }
   .word-card { padding-right: 4.75rem; }
   .card-actions { justify-content: flex-start; }
   .compact { width: 100%; }

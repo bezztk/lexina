@@ -19,6 +19,6 @@ OpenThesaurus-Datei wird von der Anwendung nicht mehr verwendet.
 
 ## Bereiche
 
-- **Wörter:** Begriffe mit optionaler Notiz und Lernstatus verwalten
+- **Wörter:** Begriffe mit Wortart, ähnlichen Wörtern, Beispielsätzen und Lernstatus verwalten
 - **Zitate & Gedichte:** Texte mit Notiz und wiederverwendbaren Tags sammeln
 - **Journal:** Einträge für einen ausgewählten Tag chronologisch verwalten

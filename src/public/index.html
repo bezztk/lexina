@@ -29,7 +29,25 @@
         <form id="word-form" class="editor" hidden>
           <input type="hidden" name="id" />
           <label>Begriff<input name="term" required /></label>
-          <label>Notiz<textarea name="note" rows="3"></textarea></label>
+          <fieldset class="choice-field">
+            <legend>Wortart</legend>
+            <input type="hidden" name="partOfSpeech" value="noun" />
+            <div class="segmented" role="group" aria-label="Wortart">
+              <button type="button" class="active" data-part-of-speech="noun" aria-pressed="true">Nomen</button>
+              <button type="button" data-part-of-speech="verb" aria-pressed="false">Verb</button>
+              <button type="button" data-part-of-speech="adjective" aria-pressed="false">Adjektiv</button>
+            </div>
+          </fieldset>
+          <fieldset class="repeater-field">
+            <legend>Ähnliche Wörter</legend>
+            <div id="similar-words" class="repeater"></div>
+            <button type="button" class="add-row" data-add-row="similar-words"><span aria-hidden="true">+</span> Weiteres Wort</button>
+          </fieldset>
+          <fieldset class="repeater-field">
+            <legend>Beispielsätze</legend>
+            <div id="example-sentences" class="repeater"></div>
+            <button type="button" class="add-row" data-add-row="example-sentences"><span aria-hidden="true">+</span> Weiterer Satz</button>
+          </fieldset>
           <label>Status<select name="status">
             <option value="unknown">Unbekannt</option><option value="learning">Wird gelernt</option>
             <option value="using">Wird benutzt</option><option value="familiar">Geläufig</option>

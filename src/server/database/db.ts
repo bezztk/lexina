@@ -22,11 +22,43 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS words (
     id INTEGER PRIMARY KEY,
     term TEXT NOT NULL,
-    note TEXT,
+    part_of_speech TEXT NOT NULL DEFAULT 'noun'
+      CHECK (part_of_speech IN ('noun', 'verb', 'adjective')),
     status TEXT NOT NULL DEFAULT 'unknown'
       CHECK (status IN ('unknown', 'learning', 'using', 'familiar')),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   );
+`);
+
+const wordColumns = db.pragma("table_info(words)") as { name: string }[];
+if (!wordColumns.some(({ name }) => name === "part_of_speech")) {
+  db.exec(`ALTER TABLE words ADD COLUMN part_of_speech TEXT NOT NULL DEFAULT 'noun'
+    CHECK (part_of_speech IN ('noun', 'verb', 'adjective'))`);
+}
+if (wordColumns.some(({ name }) => name === "note")) {
+  db.exec("ALTER TABLE words DROP COLUMN note");
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS similar_words (
+    id INTEGER PRIMARY KEY,
+    word_id INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,
+    value TEXT NOT NULL,
+    position INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_similar_words_word_position
+    ON similar_words(word_id, position);
+
+  CREATE TABLE IF NOT EXISTS example_sentences (
+    id INTEGER PRIMARY KEY,
+    word_id INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,
+    value TEXT NOT NULL,
+    position INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_example_sentences_word_position
+    ON example_sentences(word_id, position);
 
   CREATE INDEX IF NOT EXISTS idx_words_status_created_at
     ON words(status, created_at DESC);

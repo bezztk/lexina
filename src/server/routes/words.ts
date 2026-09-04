@@ -1,23 +1,41 @@
 import { Router } from "express";
 import {
   WORD_STATUSES,
+  PARTS_OF_SPEECH,
   createWord,
   deleteWord,
   listWords,
   updateWord,
   type WordStatus,
+  type PartOfSpeech,
 } from "../repositories/word-repository.js";
 
 export const wordsRouter = Router();
 
-function parseInput(body: unknown): { term: string; note: string | null; status: WordStatus } | null {
+function parseInput(body: unknown): {
+  term: string;
+  partOfSpeech: PartOfSpeech;
+  status: WordStatus;
+  similarWords: string[];
+  exampleSentences: string[];
+} | null {
   if (!body || typeof body !== "object") return null;
   const data = body as Record<string, unknown>;
   const term = typeof data.term === "string" ? data.term.trim() : "";
-  const note = typeof data.note === "string" && data.note.trim() ? data.note.trim() : null;
   const status = typeof data.status === "string" ? data.status : "unknown";
-  if (!term || !WORD_STATUSES.includes(status as WordStatus)) return null;
-  return { term, note, status: status as WordStatus };
+  const partOfSpeech = typeof data.partOfSpeech === "string" ? data.partOfSpeech : "noun";
+  const cleanList = (value: unknown) => Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean)
+    : [];
+  if (!term || !WORD_STATUSES.includes(status as WordStatus)
+    || !PARTS_OF_SPEECH.includes(partOfSpeech as PartOfSpeech)) return null;
+  return {
+    term,
+    status: status as WordStatus,
+    partOfSpeech: partOfSpeech as PartOfSpeech,
+    similarWords: cleanList(data.similarWords),
+    exampleSentences: cleanList(data.exampleSentences),
+  };
 }
 
 wordsRouter.get("/", (_request, response) => response.json(listWords()));

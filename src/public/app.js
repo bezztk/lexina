@@ -5,6 +5,7 @@ const statusLabels = {
   using: "Wird benutzt",
   familiar: "Geläufig",
 };
+const partOfSpeechLabels = { noun: "Nomen", verb: "Verb", adjective: "Adjektiv" };
 
 const message = document.querySelector("#message");
 const wordForm = document.querySelector("#word-form");
@@ -55,7 +56,11 @@ async function loadWords() {
     state.words = await api("/api/words");
     document.querySelector("#word-list").innerHTML = state.words.length ? state.words.map((word) => `
       <article class="card ${word.status === "familiar" ? "muted" : ""}">
-        <div class="card-main"><h2>${escapeHtml(word.term)}</h2>${word.note ? `<p>${escapeHtml(word.note)}</p>` : ""}</div>
+        <div class="card-main">
+          <p class="type">${partOfSpeechLabels[word.partOfSpeech]}</p><h2>${escapeHtml(word.term)}</h2>
+          ${word.similarWords.length ? `<p><strong>Ähnlich:</strong> ${word.similarWords.map(escapeHtml).join(", ")}</p>` : ""}
+          ${word.exampleSentences.length ? `<ul class="examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
+        </div>
         <div class="card-actions">
           <label class="compact">Status<select data-word-status="${word.id}">
             ${Object.entries(statusLabels).map(([value, label]) => `<option value="${value}" ${word.status === value ? "selected" : ""}>${label}</option>`).join("")}
@@ -66,12 +71,47 @@ async function loadWords() {
   } catch { notify("Wörter konnten nicht geladen werden."); }
 }
 
+function setPartOfSpeech(value) {
+  wordForm.elements.partOfSpeech.value = value;
+  wordForm.querySelectorAll("[data-part-of-speech]").forEach((button) => {
+    const selected = button.dataset.partOfSpeech === value;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+}
+
+function addRepeaterRow(containerId, value = "") {
+  const container = document.querySelector(`#${containerId}`);
+  const row = document.createElement("div");
+  row.className = "repeat-row";
+  const field = document.createElement(containerId === "example-sentences" ? "textarea" : "input");
+  field.value = value;
+  field.placeholder = containerId === "example-sentences" ? "Beispielsatz eingeben" : "Ähnliches Wort eingeben";
+  field.setAttribute("aria-label", field.placeholder);
+  if (field instanceof HTMLTextAreaElement) field.rows = 2;
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "remove-row";
+  remove.dataset.removeRow = containerId;
+  remove.setAttribute("aria-label", "Feld entfernen");
+  remove.textContent = "−";
+  row.append(field, remove);
+  container.append(row);
+}
+
+function fillRepeater(containerId, values) {
+  document.querySelector(`#${containerId}`).replaceChildren();
+  (values.length ? values : [""]).forEach((value) => addRepeaterRow(containerId, value));
+}
+
 function openWordForm(word) {
   wordForm.hidden = false;
   wordForm.elements.id.value = word?.id ?? "";
   wordForm.elements.term.value = word?.term ?? "";
-  wordForm.elements.note.value = word?.note ?? "";
   wordForm.elements.status.value = word?.status ?? "unknown";
+  setPartOfSpeech(word?.partOfSpeech ?? "noun");
+  fillRepeater("similar-words", word?.similarWords ?? []);
+  fillRepeater("example-sentences", word?.exampleSentences ?? []);
   wordForm.elements.term.focus();
 }
 
@@ -79,6 +119,8 @@ wordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(wordForm));
   const id = data.id;
+  data.similarWords = [...document.querySelectorAll("#similar-words input")].map((field) => field.value);
+  data.exampleSentences = [...document.querySelectorAll("#example-sentences textarea")].map((field) => field.value);
   try {
     await api(id ? `/api/words/${id}` : "/api/words", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
     wordForm.hidden = true; wordForm.reset(); await loadWords(); notify("Wort gespeichert.");
@@ -163,6 +205,14 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.action === "new-quote") openQuoteForm();
   if (button.dataset.action === "cancel-quote") { quoteForm.hidden = true; quoteForm.reset(); }
   if (button.dataset.action === "cancel-journal") resetJournalForm();
+  if (button.dataset.partOfSpeech) setPartOfSpeech(button.dataset.partOfSpeech);
+  if (button.dataset.addRow) addRepeaterRow(button.dataset.addRow);
+  if (button.dataset.removeRow) {
+    const containerId = button.dataset.removeRow;
+    const container = document.querySelector(`#${containerId}`);
+    button.closest(".repeat-row").remove();
+    if (!container.children.length) addRepeaterRow(containerId);
+  }
 
   const word = state.words.find((item) => item.id === Number(button.dataset.editWord));
   if (word) openWordForm(word);

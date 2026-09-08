@@ -19,8 +19,14 @@ export const db = new Database(databasePath);
 db.pragma("foreign_keys = ON");
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS word_families (
+    id INTEGER PRIMARY KEY,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  );
+
   CREATE TABLE IF NOT EXISTS words (
     id INTEGER PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES word_families(id) ON DELETE CASCADE,
     term TEXT NOT NULL,
     part_of_speech TEXT NOT NULL DEFAULT 'noun'
       CHECK (part_of_speech IN ('noun', 'verb', 'adjective')),
@@ -31,6 +37,9 @@ db.exec(`
 `);
 
 const wordColumns = db.pragma("table_info(words)") as { name: string }[];
+if (!wordColumns.some(({ name }) => name === "family_id")) {
+  db.exec("ALTER TABLE words ADD COLUMN family_id INTEGER REFERENCES word_families(id) ON DELETE CASCADE");
+}
 if (!wordColumns.some(({ name }) => name === "part_of_speech")) {
   db.exec(`ALTER TABLE words ADD COLUMN part_of_speech TEXT NOT NULL DEFAULT 'noun'
     CHECK (part_of_speech IN ('noun', 'verb', 'adjective'))`);
@@ -39,6 +48,20 @@ if (wordColumns.some(({ name }) => name === "note")) {
   db.exec("ALTER TABLE words DROP COLUMN note");
 }
 db.prepare("UPDATE words SET status = 'unknown' WHERE status = 'learning'").run();
+
+const migrateWordFamilies = db.transaction(() => {
+  const ungroupedWords = db.prepare("SELECT id, created_at AS createdAt FROM words WHERE family_id IS NULL").all() as {
+    id: number;
+    createdAt: string;
+  }[];
+  const insertFamily = db.prepare("INSERT INTO word_families (created_at) VALUES (?)");
+  const assignFamily = db.prepare("UPDATE words SET family_id = ? WHERE id = ?");
+  ungroupedWords.forEach((word) => {
+    const familyId = Number(insertFamily.run(word.createdAt).lastInsertRowid);
+    assignFamily.run(familyId, word.id);
+  });
+});
+migrateWordFamilies();
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS similar_words (
@@ -63,6 +86,9 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_words_status_created_at
     ON words(status, created_at DESC);
+
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_words_family_part_of_speech
+    ON words(family_id, part_of_speech);
 
   CREATE TABLE IF NOT EXISTS quotes (
     id INTEGER PRIMARY KEY,

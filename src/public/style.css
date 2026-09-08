@@ -391,10 +391,90 @@ input:focus, textarea:focus, select:focus {
   color: #647083;
 }
 
-.word-card {
+.word-family {
+  border-bottom: 1px solid #d8dce2;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.family-header {
   position: relative;
+  display: flex;
+  min-height: 2.25rem;
   align-items: center;
-  padding: 0.62rem 12rem 0.62rem 0.8rem;
+  justify-content: space-between;
+  padding: 0.35rem 0.55rem 0.35rem 0.8rem;
+  border-bottom: 1px solid #e2e5e9;
+  color: #737d8a;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.family-menu { position: relative; }
+.family-menu summary { cursor: pointer; list-style: none; }
+.family-menu summary::-webkit-details-marker { display: none; }
+.family-menu summary svg { fill: currentColor; stroke: none; }
+.family-menu[open] summary { border-color: #9fa8b5; background: #eef0f3; }
+
+.menu-popover {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  z-index: 3;
+  display: grid;
+  width: 13rem;
+  padding: 0.35rem;
+  border: 1px solid #aeb6c2;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(18, 24, 34, 0.16);
+}
+
+.menu-heading, .menu-empty {
+  padding: 0.4rem 0.5rem;
+  color: #737d8a;
+  font-size: 0.68rem;
+}
+
+.menu-popover button {
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+}
+
+.menu-popover button:hover { border-color: transparent; background: #edf1ff; color: #2448af; }
+
+.family-forms { display: grid; }
+
+.word-form-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) 11.5rem;
+  min-height: 3.5rem;
+  align-items: start;
+  gap: 0.8rem;
+  padding: 0.72rem 0.8rem;
+  transition: background-color 120ms ease;
+}
+
+.word-form-row + .word-form-row { border-top: 1px solid #e2e5e9; }
+.word-form-row:hover, .word-form-row:focus-within { background: #fff; }
+
+.part-of-speech {
+  padding-top: 0.2rem;
+  color: #647083;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.word-form-content { min-width: 0; }
+
+.word-form-row {
+  align-items: center;
 }
 
 .word-summary {
@@ -404,7 +484,7 @@ input:focus, textarea:focus, select:focus {
   gap: 0.55rem;
 }
 
-.word-card h2 {
+.word-form-row h2 {
   flex: 0 0 auto;
   margin: 0;
   font-size: 1rem;
@@ -456,21 +536,19 @@ input:focus, textarea:focus, select:focus {
   line-height: 1.5;
 }
 
-.word-card:hover .hover-examples,
-.word-card:focus .hover-examples,
-.word-card:focus-within .hover-examples { display: block; }
+.word-form-row:hover .hover-examples,
+.word-form-row:focus .hover-examples,
+.word-form-row:focus-within .hover-examples { display: block; }
 
-.word-card:focus, .hover-card:focus {
+.word-form-row:focus, .hover-card:focus {
   outline: 2px solid rgba(49, 91, 214, 0.45);
   outline-offset: -2px;
 }
 
 .word-meta-actions {
-  position: absolute;
-  top: 0.62rem;
-  right: 0.8rem;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem;
 }
 
@@ -481,8 +559,8 @@ input:focus, textarea:focus, select:focus {
   pointer-events: none;
 }
 
-.word-card:hover .word-actions,
-.word-card:focus-within .word-actions {
+.word-form-row:hover .word-actions,
+.word-form-row:focus-within .word-actions {
   opacity: 1;
   pointer-events: auto;
 }
@@ -691,7 +769,14 @@ blockquote {
     flex-direction: column;
   }
 
-  .word-card { padding-right: 10.5rem; }
+  .word-form-row {
+    grid-template-columns: 1fr auto;
+    gap: 0.35rem 0.75rem;
+  }
+
+  .part-of-speech { grid-column: 1; }
+  .word-form-content { grid-column: 1 / -1; grid-row: 2; }
+  .word-meta-actions { grid-column: 2; grid-row: 1; }
   .card-actions { justify-content: flex-start; }
   .compact { width: 100%; }
 }

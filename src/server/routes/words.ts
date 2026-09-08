@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   WORD_STATUSES,
   PARTS_OF_SPEECH,
+  createDerivation,
   createWord,
   deleteWord,
   listWords,
@@ -44,6 +45,16 @@ wordsRouter.post("/", (request, response) => {
   const input = parseInput(request.body);
   if (!input) return response.status(400).json({ error: "Begriff oder Status ist ungültig." });
   return response.status(201).json(createWord(input));
+});
+
+wordsRouter.post("/:familyId/derivations", (request, response) => {
+  const input = parseInput(request.body);
+  const familyId = Number(request.params.familyId);
+  if (!Number.isInteger(familyId) || !input) return response.status(400).json({ error: "Ungültige Eingabe." });
+  const word = createDerivation(familyId, input);
+  return word
+    ? response.status(201).json(word)
+    : response.status(409).json({ error: "Wortfamilie nicht gefunden oder Wortart bereits vorhanden." });
 });
 
 wordsRouter.put("/:id", (request, response) => {

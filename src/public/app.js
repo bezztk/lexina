@@ -46,7 +46,10 @@ async function api(url, options) {
     ...options,
     headers: { "Content-Type": "application/json" },
   });
-  if (!response.ok) throw new Error();
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(payload?.error || "Die Anfrage ist fehlgeschlagen.");
+  }
   return response.status === 204 ? null : response.json();
 }
 
@@ -154,7 +157,32 @@ function openWordImport() {
   wordImportError.hidden = true;
   wordImportError.textContent = "";
   wordImportDialog.showModal();
-  wordImportForm.elements.payload.focus();
+  wordImportForm.elements.dwdsSource.focus();
+}
+
+async function importFromDwds() {
+  wordImportError.hidden = true;
+  const source = wordImportForm.elements.dwdsSource.value.trim();
+  const button = wordImportForm.querySelector('[data-action="import-from-dwds"]');
+  button.disabled = true;
+  button.textContent = "Wird übernommen …";
+  try {
+    const word = await api("/api/words/import/dwds", {
+      method: "POST",
+      body: JSON.stringify({ source }),
+    });
+    closeWordImport();
+    await loadWords();
+    notify(`„${word.term}“ wurde importiert.`);
+  } catch (error) {
+    wordImportError.textContent = error instanceof Error && error.message
+      ? error.message
+      : "Das Wort konnte nicht importiert werden.";
+    wordImportError.hidden = false;
+  } finally {
+    button.disabled = false;
+    button.textContent = "Übernehmen";
+  }
 }
 
 function closeWordImport() {
@@ -341,6 +369,7 @@ document.addEventListener("click", async (event) => {
     try { await navigator.clipboard.writeText(wordImportTemplate); notify("Vorlage kopiert."); }
     catch { notify("Vorlage konnte nicht kopiert werden."); }
   }
+  if (button.dataset.action === "import-from-dwds") await importFromDwds();
   if (button.dataset.action === "new-quote") openQuoteForm();
   if (button.dataset.action === "close-quote") closeQuoteForm();
   if (button.dataset.action === "new-journal") openJournalForm();

@@ -31,6 +31,7 @@
           </div>
         </div>
         <div id="word-list" class="list"></div>
+        <p class="source-note words-source">Automatisch ergänzte ähnliche Wörter stammen aus <a href="https://www.openthesaurus.de" target="_blank">OpenThesaurus</a>.</p>
       </section>
 
       <dialog id="word-dialog" aria-labelledby="word-dialog-title">
@@ -76,6 +77,13 @@
             <button type="button" class="icon-button close-button" data-action="close-word-import" aria-label="Schließen">×</button>
           </header>
           <div class="modal-body">
+            <section class="dwds-import" aria-labelledby="dwds-import-title">
+              <h3 id="dwds-import-title">Von DWDS übernehmen</h3>
+              <p class="import-intro">Begriff und Wortart kommen von DWDS. Passende ähnliche Wörter ergänzt Lexina aus OpenThesaurus; Beispielsätze bleiben leer.</p>
+              <label>DWDS-Link oder Wort<input name="dwdsSource" placeholder="https://www.dwds.de/wb/boshaft" /></label>
+              <button type="button" class="primary" data-action="import-from-dwds">Übernehmen</button>
+            </section>
+            <div class="import-divider"><span>oder mit einer KI</span></div>
             <p class="import-intro">Kopiere diese Anweisung in eine KI und ergänze dort nur noch das gewünschte Wort. Füge anschließend die erzeugte JSON-Antwort unten ein.</p>
             <div class="import-template">
               <pre id="word-import-template"></pre>
@@ -83,6 +91,7 @@
             </div>
             <label>Ausgefülltes JSON<textarea name="payload" rows="11" required spellcheck="false" placeholder="JSON-Antwort hier einfügen"></textarea></label>
             <p id="word-import-error" class="form-error" aria-live="polite" hidden></p>
+            <p class="source-note">Ähnliche Wörter aus <a href="https://www.openthesaurus.de" target="_blank">OpenThesaurus</a>.</p>
           </div>
           <footer class="form-actions modal-footer"><button type="button" data-action="close-word-import">Abbrechen</button><button class="primary" type="submit">Importieren</button></footer>
         </form>

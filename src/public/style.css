@@ -197,6 +197,37 @@ dialog::backdrop { background: rgba(29, 35, 45, 0.52); }
   line-height: 1.5;
 }
 
+.dwds-import {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid #c5cbd4;
+  background: #f8f9fa;
+}
+
+.dwds-import h3 { margin: 0; font-size: 0.92rem; }
+.dwds-import button { justify-self: start; }
+
+.import-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #7a8492;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.import-divider::before, .import-divider::after {
+  height: 1px;
+  flex: 1;
+  background: #d8dce2;
+  content: "";
+}
+
+.source-note { margin: 0; color: #707987; font-size: 0.75rem; }
+.source-note a { color: inherit; }
+.words-source { margin-top: 0.65rem; }
+
 .import-template {
   position: relative;
   padding: 0.85rem;

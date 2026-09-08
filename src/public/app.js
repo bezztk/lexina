@@ -1,11 +1,8 @@
-const state = { wordFamilies: [], quotes: [], journal: [], tags: [] };
+const state = { words: [], quotes: [], journal: [], tags: [] };
 const icons = {
   trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg>',
   pencil: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Zm10-12 3 3"/></svg>',
-  more: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>',
 };
-const partOfSpeechLabels = { noun: "Nomen", verb: "Verb", adjective: "Adjektiv" };
-const partOfSpeechOrder = ["noun", "verb", "adjective"];
 
 const message = document.querySelector("#message");
 const wordForm = document.querySelector("#word-form");
@@ -59,48 +56,25 @@ function empty(text) {
 
 async function loadWords() {
   try {
-    state.wordFamilies = await api("/api/words");
-    document.querySelector("#word-list").innerHTML = state.wordFamilies.length ? state.wordFamilies.map(renderWordFamily).join("") : empty("Noch keine Wörter gespeichert.");
-  } catch { notify("Wörter konnten nicht geladen werden."); }
-}
-
-function renderWordFamily(family) {
-  const usedParts = new Set(family.forms.map((word) => word.partOfSpeech));
-  const missingParts = partOfSpeechOrder.filter((part) => !usedParts.has(part));
-  return `<article class="word-family">
-    <header class="family-header">
-      <span>Wortfamilie</span>
-      <details class="family-menu">
-        <summary class="icon-button" aria-label="Aktionen für diese Wortfamilie">${icons.more}</summary>
-        <div class="menu-popover">
-          <span class="menu-heading">Derivation hinzufügen</span>
-          ${missingParts.length ? missingParts.map((part) => `<button type="button" data-add-derivation="${family.id}" data-derivation-part="${part}" aria-label="${partOfSpeechLabels[part]} als Derivation hinzufügen">${partOfSpeechLabels[part]}</button>`).join("") : '<span class="menu-empty">Alle Wortarten vorhanden</span>'}
+    state.words = await api("/api/words");
+    document.querySelector("#word-list").innerHTML = state.words.length ? state.words.map((word) => `
+      <article class="card word-card ${word.status === "familiar" ? "muted" : ""}" tabindex="0">
+        <div class="card-main">
+          <div class="word-summary">
+            <h2>${escapeHtml(word.term)}</h2>
+            ${word.similarWords.length ? `<span class="word-separator" aria-hidden="true">·</span><span class="similar-words">${word.similarWords.map(escapeHtml).join(", ")}</span>` : ""}
+          </div>
+          ${word.exampleSentences.length ? `<ul class="hover-examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
         </div>
-      </details>
-    </header>
-    <div class="family-forms">${family.forms.map(renderWordForm).join("")}</div>
-  </article>`;
-}
-
-function renderWordForm(word) {
-  const statusLabel = word.status === "unknown" ? "Neu" : word.status === "using" ? "In Benutzung" : "Geläufig";
-  return `<section class="word-form-row ${word.status === "familiar" ? "muted" : ""}" tabindex="0">
-    <span class="part-of-speech">${partOfSpeechLabels[word.partOfSpeech]}</span>
-    <div class="word-form-content">
-      <div class="word-summary">
-        <h2>${escapeHtml(word.term)}</h2>
-        ${word.similarWords.length ? `<span class="word-separator" aria-hidden="true">·</span><span class="similar-words">${word.similarWords.map(escapeHtml).join(", ")}</span>` : ""}
-      </div>
-      ${word.exampleSentences.length ? `<ul class="hover-examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
-    </div>
-    <div class="word-meta-actions">
-      <div class="word-actions">
-        <button class="icon-button" data-edit-word="${word.id}" aria-label="${escapeHtml(word.term)} bearbeiten">${icons.pencil}</button>
-        <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>
-      </div>
-      <span class="status-label status-${word.status}">${statusLabel}</span>
-    </div>
-  </section>`;
+        <div class="word-meta-actions">
+          <div class="word-actions">
+            <button class="icon-button" data-edit-word="${word.id}" aria-label="${escapeHtml(word.term)} bearbeiten">${icons.pencil}</button>
+            <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>
+          </div>
+          <span class="status-label status-${word.status}">${word.status === "unknown" ? "Neu" : word.status === "using" ? "In Benutzung" : "Geläufig"}</span>
+        </div>
+      </article>`).join("") : empty("Noch keine Wörter gespeichert.");
+  } catch { notify("Wörter konnten nicht geladen werden."); }
 }
 
 function setPartOfSpeech(value) {
@@ -143,22 +117,12 @@ function fillRepeater(containerId, values) {
   (values.length ? values : [""]).forEach((value) => addRepeaterRow(containerId, value));
 }
 
-function openWordForm(word, family, derivationPart) {
-  const isDerivation = Boolean(family && !word);
-  document.querySelector("#word-dialog-title").textContent = word ? "Wortform bearbeiten" : isDerivation ? "Derivation hinzufügen" : "Wort hinzufügen";
+function openWordForm(word) {
+  document.querySelector("#word-dialog-title").textContent = word ? "Wort bearbeiten" : "Wort hinzufügen";
   wordForm.elements.id.value = word?.id ?? "";
-  wordForm.elements.familyId.value = family?.id ?? "";
   wordForm.elements.term.value = word?.term ?? "";
   wordForm.elements.status.value = word?.status ?? "unknown";
-  const availableParts = word
-    ? [word.partOfSpeech]
-    : isDerivation
-      ? partOfSpeechOrder.filter((part) => !family.forms.some((form) => form.partOfSpeech === part))
-      : partOfSpeechOrder;
-  wordForm.querySelectorAll("[data-part-of-speech]").forEach((button) => {
-    button.disabled = !availableParts.includes(button.dataset.partOfSpeech);
-  });
-  setPartOfSpeech(word?.partOfSpeech ?? derivationPart ?? availableParts[0] ?? "noun");
+  setPartOfSpeech(word?.partOfSpeech ?? "noun");
   fillRepeater("similar-words", word?.similarWords ?? []);
   fillRepeater("example-sentences", word?.exampleSentences ?? []);
   wordDialog.showModal();
@@ -174,12 +138,10 @@ wordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(wordForm));
   const id = data.id;
-  const familyId = data.familyId;
   data.similarWords = [...document.querySelectorAll("#similar-words input")].map((field) => field.value);
   data.exampleSentences = [...document.querySelectorAll("#example-sentences textarea")].map((field) => field.value);
   try {
-    const url = id ? `/api/words/${id}` : familyId ? `/api/words/${familyId}/derivations` : "/api/words";
-    await api(url, { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
+    await api(id ? `/api/words/${id}` : "/api/words", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
     closeWordForm(); await loadWords(); notify("Wort gespeichert.");
   } catch { notify("Wort konnte nicht gespeichert werden."); }
 });
@@ -304,13 +266,8 @@ document.addEventListener("click", async (event) => {
     updateRepeaterButtons(container);
   }
 
-  const word = state.wordFamilies.flatMap((family) => family.forms).find((item) => item.id === Number(button.dataset.editWord));
+  const word = state.words.find((item) => item.id === Number(button.dataset.editWord));
   if (word) openWordForm(word);
-  if (button.dataset.addDerivation) {
-    const family = state.wordFamilies.find((item) => item.id === Number(button.dataset.addDerivation));
-    button.closest("details")?.removeAttribute("open");
-    if (family) openWordForm(null, family, button.dataset.derivationPart);
-  }
   const quote = state.quotes.find((item) => item.id === Number(button.dataset.editQuote));
   if (quote) openQuoteForm(quote);
   const journal = state.journal.find((item) => item.id === Number(button.dataset.editJournal));

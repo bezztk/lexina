@@ -25,7 +25,10 @@
       <section id="words-view" class="view active">
         <div class="view-heading">
           <h1>Wörter</h1>
-          <button class="primary" data-action="new-word">Wort hinzufügen</button>
+          <div class="heading-actions">
+            <button data-action="import-word">Wort importieren</button>
+            <button class="primary" data-action="new-word">Wort hinzufügen</button>
+          </div>
         </div>
         <div id="word-list" class="list"></div>
       </section>
@@ -63,6 +66,25 @@
             </select></label>
           </div>
           <footer class="form-actions modal-footer"><button type="button" data-action="close-word">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>
+        </form>
+      </dialog>
+
+      <dialog id="word-import-dialog" class="wide-dialog" aria-labelledby="word-import-dialog-title">
+        <form id="word-import-form" class="modal-form">
+          <header class="modal-header">
+            <h2 id="word-import-dialog-title">Wort importieren</h2>
+            <button type="button" class="icon-button close-button" data-action="close-word-import" aria-label="Schließen">×</button>
+          </header>
+          <div class="modal-body">
+            <p class="import-intro">Kopiere diese Anweisung in eine KI und ergänze dort nur noch das gewünschte Wort. Füge anschließend die erzeugte JSON-Antwort unten ein.</p>
+            <div class="import-template">
+              <pre id="word-import-template"></pre>
+              <button type="button" data-action="copy-word-import-template">Vorlage kopieren</button>
+            </div>
+            <label>Ausgefülltes JSON<textarea name="payload" rows="11" required spellcheck="false" placeholder="JSON-Antwort hier einfügen"></textarea></label>
+            <p id="word-import-error" class="form-error" aria-live="polite" hidden></p>
+          </div>
+          <footer class="form-actions modal-footer"><button type="button" data-action="close-word-import">Abbrechen</button><button class="primary" type="submit">Importieren</button></footer>
         </form>
       </dialog>
 

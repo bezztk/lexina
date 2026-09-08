@@ -26,9 +26,7 @@ interface WordInput {
 const selectAll = db.prepare(`
   SELECT id, term, part_of_speech AS partOfSpeech, status, created_at AS createdAt
   FROM words
-  ORDER BY CASE status
-    WHEN 'using' THEN 0 WHEN 'unknown' THEN 1 ELSE 2 END,
-    created_at DESC
+  ORDER BY created_at DESC, id DESC
 `);
 
 const selectById = db.prepare<number>(`

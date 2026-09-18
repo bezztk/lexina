@@ -57,98 +57,6 @@ function empty(text) {
   return `<p class="empty">${escapeHtml(text)}</p>`;
 }
 
-async function loadWords() {
-  try {
-    state.words = await api("/api/words");
-    document.querySelector("#word-list").innerHTML = state.words.length ? state.words.map((word) => `
-      <article class="card word-card ${word.status === "familiar" ? "muted" : ""}" tabindex="0">
-        <div class="card-main">
-          <div class="word-summary">
-            <h2>${escapeHtml(word.term)}</h2>
-            ${word.similarWords.length ? `<span class="word-separator" aria-hidden="true">·</span><span class="similar-words">${word.similarWords.map(escapeHtml).join(", ")}</span>` : ""}
-          </div>
-          ${word.exampleSentences.length ? `<ul class="hover-examples">${word.exampleSentences.map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("")}</ul>` : ""}
-        </div>
-        <div class="word-meta-actions">
-          <div class="word-actions">
-            <button class="icon-button" data-edit-word="${word.id}" aria-label="${escapeHtml(word.term)} bearbeiten">${icons.pencil}</button>
-            <button class="icon-button danger" data-delete-word="${word.id}" aria-label="${escapeHtml(word.term)} entfernen">${icons.trash}</button>
-          </div>
-          <span class="status-label status-${word.status}">${word.status === "unknown" ? "Neu" : word.status === "using" ? "In Benutzung" : "Geläufig"}</span>
-        </div>
-      </article>`).join("") : empty("Noch keine Wörter gespeichert.");
-  } catch { notify("Wörter konnten nicht geladen werden."); }
-}
-
-function setPartOfSpeech(value) {
-  wordForm.elements.partOfSpeech.value = value;
-  wordForm.querySelectorAll("[data-part-of-speech]").forEach((button) => {
-    const selected = button.dataset.partOfSpeech === value;
-    button.classList.toggle("active", selected);
-    button.setAttribute("aria-pressed", String(selected));
-  });
-}
-
-function addRepeaterRow(containerId, value = "") {
-  const container = document.querySelector(`#${containerId}`);
-  const row = document.createElement("div");
-  row.className = "repeat-row";
-  const field = document.createElement(containerId === "example-sentences" ? "textarea" : "input");
-  field.value = value;
-  field.placeholder = containerId === "example-sentences" ? "Beispielsatz eingeben" : "Ähnliches Wort eingeben";
-  field.setAttribute("aria-label", field.placeholder);
-  if (field instanceof HTMLTextAreaElement) field.rows = 2;
-  const remove = document.createElement("button");
-  remove.type = "button";
-  remove.className = "remove-row";
-  remove.dataset.removeRow = containerId;
-  remove.setAttribute("aria-label", "Feld entfernen");
-  remove.innerHTML = icons.trash;
-  row.append(field, remove);
-  container.append(row);
-  updateRepeaterButtons(container);
-}
-
-function updateRepeaterButtons(container) {
-  container.querySelectorAll(".remove-row").forEach((button, index) => {
-    button.hidden = index === 0;
-  });
-}
-
-function fillRepeater(containerId, values) {
-  document.querySelector(`#${containerId}`).replaceChildren();
-  (values.length ? values : [""]).forEach((value) => addRepeaterRow(containerId, value));
-}
-
-function openWordForm(word) {
-  document.querySelector("#word-dialog-title").textContent = word ? "Wort bearbeiten" : "Wort hinzufügen";
-  wordForm.elements.id.value = word?.id ?? "";
-  wordForm.elements.term.value = word?.term ?? "";
-  wordForm.elements.status.value = word?.status ?? "unknown";
-  setPartOfSpeech(word?.partOfSpeech ?? "noun");
-  fillRepeater("similar-words", word?.similarWords ?? []);
-  fillRepeater("example-sentences", word?.exampleSentences ?? []);
-  wordDialog.showModal();
-  wordForm.elements.term.focus();
-}
-
-function closeWordForm() {
-  wordDialog.close();
-  wordForm.reset();
-}
-
-wordForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const data = Object.fromEntries(new FormData(wordForm));
-  const id = data.id;
-  data.similarWords = [...document.querySelectorAll("#similar-words input")].map((field) => field.value);
-  data.exampleSentences = [...document.querySelectorAll("#example-sentences textarea")].map((field) => field.value);
-  try {
-    await api(id ? `/api/words/${id}` : "/api/words", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
-    closeWordForm(); await loadWords(); notify("Wort gespeichert.");
-  } catch { notify("Wort konnte nicht gespeichert werden."); }
-});
-
 async function loadQuotes() {
   try {
     [state.quotes] = await Promise.all([api("/api/quotes"), loadTags()]);
@@ -260,7 +168,6 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.action === "close-journal") closeJournalForm();
   if (button.dataset.action === "new-tag") { tagDialog.showModal(); tagForm.elements.name.focus(); }
   if (button.dataset.action === "close-tag") { tagDialog.close(); tagForm.reset(); }
-  if (button.dataset.partOfSpeech) setPartOfSpeech(button.dataset.partOfSpeech);
   if (button.dataset.addRow) addRepeaterRow(button.dataset.addRow);
   if (button.dataset.removeRow) {
     const containerId = button.dataset.removeRow;
@@ -280,7 +187,7 @@ document.addEventListener("click", async (event) => {
     ["deleteWord", "words", loadWords], ["deleteQuote", "quotes", loadQuotes], ["deleteJournal", "journal", loadJournal], ["deleteTag", "tags", loadTags],
   ]) {
     const id = button.dataset[key];
-    if (id && window.confirm("Eintrag wirklich löschen?")) {
+    if (id && window.confirm(key === "deleteWord" ? "Diese Worteinheit endgültig löschen? Ihre Beispiele, Übersetzungen und alle Zuordnungen werden entfernt." : "Eintrag wirklich löschen?")) {
       try { await api(`/api/${endpoint}/${id}`, { method: "DELETE" }); await reload(); notify("Eintrag gelöscht."); }
       catch { notify("Eintrag konnte nicht gelöscht werden."); }
     }
@@ -299,4 +206,5 @@ window.addEventListener("hashchange", () => showView(location.hash.slice(1) || "
 journalDate.value = localDateTime().slice(0, 10);
 journalDate.addEventListener("change", () => { resetJournalForm(); loadJournal(); });
 resetJournalForm();
+initWordArea();
 showView(location.hash.slice(1) || "words");

@@ -3,3 +3,4 @@ data/lexina.sqlite-shm
 data/lexina.sqlite-wal
 src/dist/
 src/node_modules/
+data/lexina.sqlite.before-word-inventory-*.bak

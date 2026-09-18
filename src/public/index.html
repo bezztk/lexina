@@ -6,6 +6,7 @@
     <meta name="description" content="Persönlicher Wortschatz, Zitate und Journal" />
     <title>Lexina</title>
     <link rel="stylesheet" href="/style.css" />
+    <script src="/words.js" defer></script>
     <script src="/app.js" defer></script>
   </head>
   <body>
@@ -23,46 +24,63 @@
       <p id="message" class="message" aria-live="polite" hidden></p>
 
       <section id="words-view" class="view active">
-        <div class="view-heading">
-          <h1>Wörter</h1>
-          <button class="primary" data-action="new-word">Wort hinzufügen</button>
+        <div class="view-heading"><h1>Wörter</h1><button data-action="new-space">Bedeutungsraum anlegen</button></div>
+        <form id="quick-word-form" class="quick-capture">
+          <label>Wort schnell erfassen<input name="term" required placeholder="Ein Wort für später …" autocomplete="off" /></label>
+          <label>Sprache<select name="language"><option value="de">Deutsch</option><option value="en">Englisch</option><option value="tr">Türkisch</option></select></label>
+          <button class="primary">Hinzufügen</button>
+        </form>
+        <div class="word-filters">
+          <label>Suchen<input id="word-search" type="search" placeholder="Wort, Bedeutung, Übersetzung oder Raum" /></label>
+          <label>Status<select id="word-status-filter"><option value="">Alle Status</option><option value="draft">Entwurf</option><option value="ready">Bereit</option><option value="learning">Im Lernen</option></select></label>
+          <label>Sprache<select id="word-language-filter"><option value="">Alle Sprachen</option><option value="de">Deutsch</option><option value="en">Englisch</option><option value="tr">Türkisch</option></select></label>
+          <label>Zuordnung<select id="word-assignment-filter"><option value="">Alle Wörter</option><option value="none">Ohne Bedeutungsraum</option></select></label>
         </div>
-        <div id="word-list" class="list"></div>
+        <section class="draft-section" aria-labelledby="draft-heading"><h2 id="draft-heading">Entwürfe <span id="draft-count"></span></h2><p class="section-hint">Schnell gesammelt, später ausarbeiten. Klicke auf ein Wort zum Bearbeiten.</p><div id="draft-list" class="list"></div></section>
+        <section aria-labelledby="inventory-heading"><h2 id="inventory-heading">Weitere Wörter</h2><div id="word-list" class="list"></div></section>
+        <section aria-labelledby="spaces-heading"><h2 id="spaces-heading">Bedeutungsräume</h2><p class="section-hint">Deine persönliche Reihenfolge gilt für jeden Raum einzeln.</p><div id="space-list" class="list"></div></section>
       </section>
 
       <dialog id="word-dialog" aria-labelledby="word-dialog-title">
         <form id="word-form" class="modal-form">
-          <header class="modal-header">
-            <h2 id="word-dialog-title">Wort hinzufügen</h2>
-            <button type="button" class="icon-button close-button" data-action="close-word" aria-label="Schließen">×</button>
-          </header>
+          <header class="modal-header"><h2 id="word-dialog-title">Wort bearbeiten</h2><button type="button" class="icon-button close-button" data-action="close-word" aria-label="Schließen">×</button></header>
           <div class="modal-body">
             <input type="hidden" name="id" />
-            <label>Begriff<input name="term" required /></label>
-            <fieldset class="choice-field">
-              <legend>Wortart</legend>
-              <input type="hidden" name="partOfSpeech" value="noun" />
-              <div class="segmented" role="group" aria-label="Wortart">
-                <button type="button" class="active" data-part-of-speech="noun" aria-pressed="true">Nomen</button>
-                <button type="button" data-part-of-speech="verb" aria-pressed="false">Verb</button>
-                <button type="button" data-part-of-speech="adjective" aria-pressed="false">Adjektiv</button>
-              </div>
+            <label>Wort<input name="term" required /></label>
+            <div class="field-pair">
+              <label>Sprache<select name="language"><option value="de">Deutsch</option><option value="en">Englisch</option><option value="tr">Türkisch</option></select></label>
+              <label>Status<select name="status"><option value="draft">Entwurf</option><option value="ready">Bereit</option><option value="learning">Im Lernen</option></select></label>
+            </div>
+            <label>Konkrete Bedeutung<textarea name="meaning" rows="2"></textarea></label>
+            <fieldset class="repeater-field"><legend>Beispielsätze</legend><div id="example-sentences" class="repeater"></div><button type="button" class="add-row" data-add-row="example-sentences">Weiteren Satz hinzufügen</button></fieldset>
+            <label>Notiz<textarea name="note" rows="3"></textarea></label>
+            <fieldset><legend>Bedeutungsräume</legend>
+              <label>Vorhandene Räume suchen<input id="space-search" type="search" placeholder="Bezeichnung suchen" /></label>
+              <div id="word-space-options" class="space-options"></div>
+              <div class="inline-create"><label>Neuen Raum erstellen<input id="inline-space-label" placeholder="Bezeichnung" /></label><button type="button" data-action="inline-space">Anlegen und zuordnen</button></div>
             </fieldset>
-            <fieldset class="repeater-field">
-              <legend>Ähnliche Wörter</legend>
-              <div id="similar-words" class="repeater"></div>
-              <button type="button" class="add-row" data-add-row="similar-words">Weiteres Wort hinzufügen</button>
-            </fieldset>
-            <fieldset class="repeater-field">
-              <legend>Beispielsätze</legend>
-              <div id="example-sentences" class="repeater"></div>
-              <button type="button" class="add-row" data-add-row="example-sentences">Weiteren Satz hinzufügen</button>
-            </fieldset>
-            <label>Status<select name="status">
-              <option value="unknown">Neu</option><option value="using">In Benutzung</option><option value="familiar">Geläufig</option>
-            </select></label>
+            <fieldset class="repeater-field"><legend>Übersetzungen dieser Bedeutung</legend><div id="translation-list" class="repeater"></div><button type="button" class="add-row" data-action="add-translation">Übersetzung hinzufügen</button></fieldset>
+            <details id="word-legacy" hidden><summary>Bewahrte Originalinformationen</summary><pre class="legacy-details"></pre></details>
+            <p id="word-error" class="editor-error" aria-live="polite" hidden></p>
           </div>
-          <footer class="form-actions modal-footer"><button type="button" data-action="close-word">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>
+          <footer class="form-actions modal-footer"><button type="button" data-action="close-word">Abbrechen</button><button class="primary">Speichern</button></footer>
+        </form>
+      </dialog>
+
+      <dialog id="space-dialog" aria-labelledby="space-dialog-title">
+        <form id="space-form" class="modal-form">
+          <header class="modal-header"><h2 id="space-dialog-title">Bedeutungsraum</h2><button type="button" class="icon-button close-button" data-action="close-space" aria-label="Schließen">×</button></header>
+          <div class="modal-body">
+            <input type="hidden" name="id" />
+            <label>Bezeichnung<input name="label" required /></label>
+            <label>Notiz<textarea name="note" rows="3"></textarea></label>
+            <label>Gemeinsame Beispiele (ein Satz pro Zeile)<textarea name="examples" rows="4"></textarea></label>
+            <p class="section-hint">Wörter im Worteditor zuordnen. Hier die Reihenfolge ändern oder eine Zuordnung entfernen.</p>
+            <div id="space-word-editor"></div>
+            <details id="space-legacy" hidden><summary>Bewahrte Originalinformationen</summary><pre class="legacy-details"></pre></details>
+            <p id="space-error" class="editor-error" aria-live="polite" hidden></p>
+          </div>
+          <footer class="form-actions modal-footer"><button type="button" data-action="close-space">Abbrechen</button><button class="primary">Speichern</button></footer>
         </form>
       </dialog>
 

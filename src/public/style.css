@@ -700,3 +700,65 @@ blockquote {
   .card-actions { justify-content: flex-start; }
   .compact { width: 100%; }
 }
+
+/* Word inventory: compact cards and controls that also work with touch. */
+.quick-capture, .word-filters, .field-pair, .inline-create {
+  display: flex;
+  align-items: end;
+  gap: 0.65rem;
+}
+.quick-capture { padding: 0.9rem; border: 1px solid #c5cbd4; background: #f8f9fa; margin-bottom: 1rem; }
+.quick-capture label:first-child, .word-filters label:first-child { flex: 1; }
+.quick-capture label, .word-filters label, .field-pair label, .inline-create label { min-width: 0; }
+.word-filters { flex-wrap: wrap; margin-bottom: 1.2rem; }
+#words-view > section { margin-top: 1.4rem; }
+#words-view > section > h2 { font-size: 1rem; margin: 0 0 0.65rem; }
+#words-view .draft-section { border-top: 3px solid #ad6200; padding-top: 0.9rem; }
+.section-hint { font-size: 0.8rem; color: #596372; margin: 0 0 0.7rem; }
+.inventory-card.word-card { padding: 0.7rem 0.8rem; display: flex; align-items: start; gap: 0.7rem; }
+.inventory-card h3, .meaning-space-card h3 { margin: 0; font-size: 0.92rem; }
+.word-link, .space-link { min-height: 0; padding: 0.1rem 0; background: transparent; border: none; text-align: left; color: inherit; }
+.word-link { font-weight: 600; }
+.space-link { font-weight: 700; }
+.word-link:hover, .space-link:hover { background: transparent; text-decoration: underline; }
+.word-link:focus-visible, .space-link:focus-visible { outline: 2px solid #315bd6; outline-offset: 3px; }
+.language-label, .inventory-status { font-size: 0.73rem; white-space: nowrap; }
+.language-label { color: #707987; }
+.inventory-status { padding: 0.1rem 0.4rem; border-radius: 3px; background: #f5f6f8; }
+.status-draft { color: #ad6200; }
+.status-ready { color: #21815a; }
+.status-learning { color: #315bd6; }
+.card-main .word-meaning { margin: 0.35rem 0 0; font-size: 0.83rem; }
+.card-main .word-memberships { margin: 0.35rem 0 0; font-size: 0.75rem; color: #707987; }
+.meaning-space-card { display: flex; gap: 0.8rem; align-items: start; }
+.meaning-space-card .word-summary { align-items: baseline; }
+.space-summary-words { font-size: 0.86rem; }
+.space-summary-words small { font-weight: normal; color: #707987; font-size: 0.7rem; }
+.space-card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: end; }
+.space-card-actions > button:first-child { font-size: 0.75rem; }
+.space-options { max-height: 12rem; overflow: auto; display: grid; gap: 0.3rem; margin: 0.6rem 0; }
+.space-choice { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+.space-choice input { width: auto; margin: 0; }
+.field-pair > label { flex: 1; }
+.translation-row { padding: 0.75rem; border: 1px solid #d8dce2; display: grid; gap: 0.65rem; }
+.translation-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.translation-actions button { font-size: 0.75rem; }
+.editor-error { background: #fff1f1; color: #8e252b; padding: 0.65rem; border-left: 3px solid #aa2f35; }
+.editor-error[hidden] { display: none; }
+.legacy-details { font-size: 0.72rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.space-order-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid #d8dce2; }
+.space-order-row > div { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: end; }
+.space-order-row button { min-width: 2.2rem; min-height: 2.2rem; font-size: 0.76rem; }
+button:disabled { opacity: 0.45; cursor: default; }
+@media (max-width: 640px) {
+  .quick-capture, .inline-create { flex-wrap: wrap; }
+  .quick-capture label:first-child, .inline-create label { flex-basis: 100%; }
+  .quick-capture label:nth-child(2) { flex: 1; }
+  .word-filters label { flex: 1 1 40%; }
+  .word-filters label:first-child { flex-basis: 100%; }
+  .meaning-space-card { flex-direction: column; }
+  .meaning-space-card .word-summary { flex-direction: column; gap: 0.3rem; }
+  .space-order-row { align-items: start; flex-direction: column; }
+  .space-order-row > div { justify-content: start; }
+  .translation-actions button { width: 100%; }
+}

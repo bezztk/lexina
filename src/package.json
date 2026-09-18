@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx server/index.ts",
     "build": "tsc",
+    "test": "npm run build && node --test tests/*.test.cjs",
     "start": "node dist/server/index.js"
   },
   "keywords": [],

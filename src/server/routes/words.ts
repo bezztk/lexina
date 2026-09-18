@@ -9,8 +9,6 @@ import {
   type WordStatus,
   type PartOfSpeech,
 } from "../repositories/word-repository.js";
-import { findRelevantSynonyms } from "../repositories/openthesaurus-repository.js";
-import { fetchDwdsWord } from "../services/dwds-import.js";
 
 export const wordsRouter = Router();
 
@@ -41,23 +39,6 @@ function parseInput(body: unknown): {
 }
 
 wordsRouter.get("/", (_request, response) => response.json(listWords()));
-
-wordsRouter.post("/import/dwds", async (request, response) => {
-  const source = request.body && typeof request.body.source === "string" ? request.body.source : "";
-  try {
-    const word = await fetchDwdsWord(source);
-    const similarWords = findRelevantSynonyms(word.term);
-    return response.status(201).json(createWord({
-      ...word,
-      status: "unknown",
-      similarWords,
-      exampleSentences: [],
-    }));
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Das Wort konnte nicht importiert werden.";
-    return response.status(400).json({ error: message });
-  }
-});
 
 wordsRouter.post("/", (request, response) => {
   const input = parseInput(request.body);

@@ -7,9 +7,6 @@ const icons = {
 const message = document.querySelector("#message");
 const wordForm = document.querySelector("#word-form");
 const wordDialog = document.querySelector("#word-dialog");
-const wordImportForm = document.querySelector("#word-import-form");
-const wordImportDialog = document.querySelector("#word-import-dialog");
-const wordImportError = document.querySelector("#word-import-error");
 const quoteForm = document.querySelector("#quote-form");
 const quoteDialog = document.querySelector("#quote-dialog");
 const journalForm = document.querySelector("#journal-form");
@@ -17,18 +14,6 @@ const journalDialog = document.querySelector("#journal-dialog");
 const journalDate = document.querySelector("#journal-date");
 const tagForm = document.querySelector("#tag-form");
 const tagDialog = document.querySelector("#tag-dialog");
-const wordImportTemplate = `Das ist das Importschema für das Programm Lexina. Erstelle damit genau einen vollständigen Worteintrag. Verwende für "partOfSpeech" ausschließlich "noun", "verb" oder "adjective". Gib ausschließlich gültiges JSON ohne Markdown-Codeblock und ohne zusätzlichen Text zurück. Formuliere natürliche deutsche Beispielsätze. Verwende eine leere Liste, wenn es keine passenden ähnlichen Wörter oder Beispielsätze gibt.
-
-{
-  "term": "behutsam",
-  "partOfSpeech": "adjective",
-  "similarWords": ["vorsichtig", "achtsam"],
-  "exampleSentences": [
-    "Sie öffnete die alte Schachtel ganz behutsam.",
-    "Er brachte ihr die Nachricht behutsam bei."
-  ]
-}`;
-document.querySelector("#word-import-template").textContent = wordImportTemplate;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -152,84 +137,6 @@ function closeWordForm() {
   wordForm.reset();
 }
 
-function openWordImport() {
-  wordImportForm.reset();
-  wordImportError.hidden = true;
-  wordImportError.textContent = "";
-  wordImportDialog.showModal();
-  wordImportForm.elements.dwdsSource.focus();
-}
-
-async function importFromDwds() {
-  wordImportError.hidden = true;
-  const source = wordImportForm.elements.dwdsSource.value.trim();
-  const button = wordImportForm.querySelector('[data-action="import-from-dwds"]');
-  button.disabled = true;
-  button.textContent = "Wird übernommen …";
-  try {
-    const word = await api("/api/words/import/dwds", {
-      method: "POST",
-      body: JSON.stringify({ source }),
-    });
-    closeWordImport();
-    await loadWords();
-    notify(`„${word.term}“ wurde importiert.`);
-  } catch (error) {
-    wordImportError.textContent = error instanceof Error && error.message
-      ? error.message
-      : "Das Wort konnte nicht importiert werden.";
-    wordImportError.hidden = false;
-  } finally {
-    button.disabled = false;
-    button.textContent = "Übernehmen";
-  }
-}
-
-function closeWordImport() {
-  wordImportDialog.close();
-  wordImportForm.reset();
-  wordImportError.hidden = true;
-}
-
-function parseWordImport(rawValue) {
-  let source = rawValue.trim();
-  const fencedJson = source.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  if (fencedJson) source = fencedJson[1];
-
-  let parsed;
-  try { parsed = JSON.parse(source); }
-  catch { throw new Error("Das eingefügte JSON ist nicht gültig."); }
-
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("Der Import muss genau einen Worteintrag enthalten.");
-  }
-
-  const term = typeof parsed.term === "string" ? parsed.term.trim() : "";
-  const partOfSpeechAliases = {
-    noun: "noun", nomen: "noun", substantiv: "noun",
-    verb: "verb",
-    adjective: "adjective", adjektiv: "adjective",
-  };
-  const partKey = typeof parsed.partOfSpeech === "string" ? parsed.partOfSpeech.trim().toLowerCase() : "";
-  const partOfSpeech = partOfSpeechAliases[partKey];
-  const cleanList = (value, fieldName) => {
-    if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
-      throw new Error(`„${fieldName}“ muss eine Liste aus Texten sein.`);
-    }
-    return value.map((item) => item.trim()).filter(Boolean);
-  };
-
-  if (!term) throw new Error("Im Feld „term“ fehlt der Begriff.");
-  if (!partOfSpeech) throw new Error("Die Wortart muss noun, verb oder adjective sein.");
-  return {
-    term,
-    partOfSpeech,
-    similarWords: cleanList(parsed.similarWords, "similarWords"),
-    exampleSentences: cleanList(parsed.exampleSentences, "exampleSentences"),
-    status: "unknown",
-  };
-}
-
 wordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(wordForm));
@@ -240,22 +147,6 @@ wordForm.addEventListener("submit", async (event) => {
     await api(id ? `/api/words/${id}` : "/api/words", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
     closeWordForm(); await loadWords(); notify("Wort gespeichert.");
   } catch { notify("Wort konnte nicht gespeichert werden."); }
-});
-
-wordImportForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  try {
-    const data = parseWordImport(wordImportForm.elements.payload.value);
-    await api("/api/words", { method: "POST", body: JSON.stringify(data) });
-    closeWordImport();
-    await loadWords();
-    notify(`„${data.term}“ wurde importiert.`);
-  } catch (error) {
-    wordImportError.textContent = error instanceof Error && error.message
-      ? error.message
-      : "Das Wort konnte nicht importiert werden.";
-    wordImportError.hidden = false;
-  }
 });
 
 async function loadQuotes() {
@@ -363,13 +254,6 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.view) showView(button.dataset.view);
   if (button.dataset.action === "new-word") openWordForm();
   if (button.dataset.action === "close-word") closeWordForm();
-  if (button.dataset.action === "import-word") openWordImport();
-  if (button.dataset.action === "close-word-import") closeWordImport();
-  if (button.dataset.action === "copy-word-import-template") {
-    try { await navigator.clipboard.writeText(wordImportTemplate); notify("Vorlage kopiert."); }
-    catch { notify("Vorlage konnte nicht kopiert werden."); }
-  }
-  if (button.dataset.action === "import-from-dwds") await importFromDwds();
   if (button.dataset.action === "new-quote") openQuoteForm();
   if (button.dataset.action === "close-quote") closeQuoteForm();
   if (button.dataset.action === "new-journal") openJournalForm();
@@ -406,7 +290,6 @@ document.addEventListener("click", async (event) => {
 wordDialog.addEventListener("click", (event) => {
   if (event.target === wordDialog) closeWordForm();
 });
-wordImportDialog.addEventListener("click", (event) => { if (event.target === wordImportDialog) closeWordImport(); });
 quoteDialog.addEventListener("click", (event) => { if (event.target === quoteDialog) closeQuoteForm(); });
 journalDialog.addEventListener("click", (event) => { if (event.target === journalDialog) closeJournalForm(); });
 tagDialog.addEventListener("click", (event) => { if (event.target === tagDialog) { tagDialog.close(); tagForm.reset(); } });

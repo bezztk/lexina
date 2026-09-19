@@ -770,12 +770,12 @@ blockquote {
 .quiet-button { min-height: 0; padding: 0.15rem 0; border: 0; background: transparent; color: #756550; }
 .quiet-button:hover { border: 0; background: transparent; color: #793f28; text-decoration: underline; }
 .vocabulary-entry-card { min-height: 0; padding: 0; }
-.vocabulary-entry-content { display: grid; width: 100%; min-height: 0; grid-template-columns: minmax(9rem,0.8fr) minmax(9rem,0.8fr) minmax(12rem,1.4fr) auto; align-items: baseline; gap: 1rem; padding: 0.65rem 0.8rem; border: 0; background: transparent; text-align: left; }
+.vocabulary-entry-content { display: grid; width: 100%; min-height: 0; grid-template-columns: minmax(0,0.9fr) minmax(0,0.9fr) minmax(0,1.5fr) 5.5rem; align-items: baseline; gap: 1rem; padding: 0.65rem 0.8rem; border: 0; background: transparent; text-align: left; }
 .vocabulary-entry-content:hover { border: 0; background: transparent; }
 .vocabulary-entry-content strong { color: #626438; font-size: 0.95rem; }
 .vocabulary-entry-content span { color: #493a2c; font-weight: 650; }
-.vocabulary-entry-content small { color: #756550; font-size: 0.8rem; }
-.vocabulary-status { color: #756550; font-size: 0.72rem; font-style: normal; font-weight: 650; white-space: nowrap; }
+.vocabulary-entry-content small { min-width: 0; overflow-wrap: anywhere; color: #756550; font-size: 0.8rem; }
+.vocabulary-status { color: #756550; font-size: 0.72rem; font-style: normal; font-weight: 650; text-align: right; white-space: nowrap; }
 .vocabulary-status-learning, .vocabulary-summary-learning { color: #a05a27; }
 .vocabulary-status-consolidating, .vocabulary-summary-consolidating { color: #77763f; }
 .vocabulary-status-secure, .vocabulary-summary-secure { color: #53705b; }

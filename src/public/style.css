@@ -775,3 +775,71 @@ button:disabled { opacity: 0.45; cursor: default; }
   .meaning-card-links { flex-wrap: wrap; }
   .meaning-group-header > p, .meaning-card-summary p { text-align: left; }
 }
+
+/* Experimental sand-paper theme. Kept as one block so it can be removed cleanly. */
+:root {
+  color: #3b3126;
+  background: #d8c9ad;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+}
+
+body {
+  color: #3b3126;
+  background-color: #d8c9ad;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='4' seed='8'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.13'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 18% 12%, rgba(255, 250, 230, 0.62), transparent 33rem),
+    linear-gradient(112deg, #ddd0b7 0%, #d4c3a5 52%, #dfd2ba 100%);
+  background-attachment: fixed;
+}
+
+h1, h2, .brand { font-family: Georgia, "Times New Roman", serif; }
+h1 { color: #33281e; font-weight: 600; letter-spacing: -0.025em; }
+.brand { color: #4b3929; font-size: 0.95rem; letter-spacing: 0.19em; }
+.app-header { border-color: rgba(112, 88, 59, 0.34); background: rgba(239, 229, 207, 0.9); box-shadow: 0 2px 12px rgba(80, 59, 34, 0.08); }
+.nav-button { color: #6c5b48; }
+.nav-button:hover { border-color: #b38a66; background: rgba(169, 116, 76, 0.08); color: #453426; }
+.nav-button.active { border-color: #9a6243; background: rgba(154, 98, 67, 0.1); color: #76462f; }
+
+button { border-color: #ae9879; background: rgba(250, 244, 230, 0.76); color: #463729; border-radius: 3px; }
+button:hover { border-color: #84694e; background: rgba(255, 249, 235, 0.92); }
+button:focus-visible, .word-link:focus-visible, .space-link:focus-visible { outline-color: rgba(151, 91, 56, 0.45); }
+button.primary { border-color: #925b3d; background: #925b3d; color: #fffaf0; box-shadow: 0 2px 6px rgba(91, 55, 34, 0.16); }
+button.primary:hover { border-color: #74442e; background: #74442e; }
+button.danger { color: #9b4138; }
+
+input, textarea, select { border-color: #ad987b; background-color: rgba(255, 250, 238, 0.84); color: #382e24; box-shadow: inset 0 1px 2px rgba(80, 58, 34, 0.06); }
+input::placeholder, textarea::placeholder { color: #988975; }
+input:focus, textarea:focus, select:focus { border-color: #9a6243; outline-color: rgba(154, 98, 67, 0.18); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%236b513b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+
+dialog { border-color: #9f8768; background: #f4ead5; box-shadow: 0 24px 70px rgba(67, 48, 29, 0.34); }
+dialog::backdrop { background: rgba(54, 44, 34, 0.58); }
+.modal-header, .modal-footer { border-color: #c8b89d; background: rgba(235, 221, 193, 0.72); }
+.language-section { border-color: #c5b394; background: rgba(226, 209, 177, 0.28); }
+label, legend { color: #685641; }
+
+.list, .word-inventory-toolbar, .text-section-switch { border-color: #b9a588; }
+.card, .meaning-word-group { border-color: #c3b195; background: rgba(249, 242, 225, 0.7); box-shadow: inset 0 1px rgba(255, 255, 255, 0.34); }
+.card:hover, .card:focus-within { background: rgba(255, 249, 235, 0.9); }
+.meaning-group-header { border-color: #c3b195; background: rgba(226, 209, 177, 0.35); }
+.meaning-group-header > p, .inline-word-meaning, .card-main .word-detail-line, .note { color: #756550 !important; }
+.grouped-word-row + .grouped-word-row { border-color: rgba(174, 152, 121, 0.48); }
+
+.word-section-switch button { color: #7b6a55; }
+.word-section-switch button.active { border-color: #9a6243; color: #78472f; }
+.word-title-line .word-link { border-color: #a96542; background: rgba(186, 116, 75, 0.14); color: #793f28; }
+.word-title-line .word-link:hover { background: rgba(186, 116, 75, 0.23); }
+.selected-word-tag { border-color: #9a6243; background: rgba(186, 116, 75, 0.12); color: #78472f; }
+.selected-word-tag button { border-color: #c9ad92; }
+.status-draft { color: #a05a27; }
+.status-learning { color: #6d7040; }
+.status-ready { color: #53705b; }
+
+.tags span, .managed-tag, .tag-choice span { border-color: #c0ad90; background: rgba(239, 226, 201, 0.7); color: #665440; }
+.tag-choice input:checked + span { border-color: #9a6243; background: rgba(181, 111, 70, 0.16); color: #79452e; }
+.quote-content, .journal-content { color: #43362a; }
+.quote-content:hover, .journal-content:hover { color: #8a4f32; }
+.journal-card time, .detail-label { color: #5f4b38; }
+.empty { border-color: #af9a7c; color: #786854; }
+.message { border-color: #4f3a29; background: #4f3a29; color: #fff8ea; }

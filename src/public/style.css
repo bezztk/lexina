@@ -491,10 +491,11 @@ input:focus, textarea:focus, select:focus {
 .text-card { align-items: start; }
 .quote-card { padding-right: 0.8rem; }
 .quote-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.quote-card-header blockquote { min-width: 0; flex: 1 1 auto; }
+.quote-card-header blockquote { min-width: 0; flex: 1 1 auto; margin-bottom: 0; }
 .quote-card-header .tags { flex: 0 0 auto; justify-content: flex-end; margin: 0 0 0 auto; }
 .quote-content { display: block; min-height: 0; padding: 0; border: 0; background: transparent; color: inherit; font-size: inherit; line-height: inherit; text-align: left; white-space: pre-wrap; }
 .quote-content:hover { background: transparent; color: #2448af; text-decoration: underline; text-underline-offset: 0.16em; }
+.quote-card .note { margin-top: 0.15rem; }
 
 blockquote {
   margin: 0 0 0.55rem;

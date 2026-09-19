@@ -33,8 +33,11 @@ function importInput(body: unknown,unitId: number | null): { inputs: VocabularyE
   if (body.length > 1000) return { inputs: [],error: "Pro Import sind höchstens 1000 Vokabeln möglich." };
   const inputs: VocabularyEntryInput[] = [];
   for (const [index,item] of body.entries()) {
-    if (!item || typeof item !== "object" || Array.isArray(item)) return { inputs: [],error: `Eintrag ${index + 1} ist ungültig.` };
-    const data = item as Record<string,unknown>;
+    if (!item || typeof item !== "object") return { inputs: [],error: `Eintrag ${index + 1} ist ungültig.` };
+    const data = Array.isArray(item)
+      ? { english: item[0],german: item[1],meaning: item[2] }
+      : item as Record<string,unknown>;
+    if (Array.isArray(item) && (item.length < 2 || item.length > 3)) return { inputs: [],error: `Eintrag ${index + 1} muss zwei oder drei Werte enthalten.` };
     const englishTerm = text(data.english);
     const germanTranslation = text(data.german);
     if (!englishTerm || !germanTranslation) return { inputs: [],error: `Eintrag ${index + 1} benötigt Englisch und Deutsch.` };

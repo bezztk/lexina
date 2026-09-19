@@ -134,6 +134,8 @@ function initWordArea() {
       item.classList.toggle("active",item === button); item.setAttribute("aria-selected",String(item === button));
     });
     document.querySelector(".word-filters").hidden = section !== "inventory";
+    document.querySelector('[data-action="new-word"]').hidden = section !== "inventory";
+    document.querySelector('[data-action="new-space"]').hidden = section !== "meanings";
     document.querySelector("#word-overview").hidden = section !== "inventory";
     document.querySelector("#meaning-overview").hidden = section !== "meanings";
   }));

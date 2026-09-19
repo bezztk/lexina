@@ -233,7 +233,6 @@ document.querySelectorAll("[data-text-type]").forEach(button => button.addEventL
   document.querySelectorAll("[data-text-type]").forEach(item => {
     item.classList.toggle("active",item === button); item.setAttribute("aria-selected",String(item === button));
   });
-  document.querySelector('[data-action="new-quote"]').textContent = selectedTextType === "quote" ? "Zitat hinzufügen" : "Gedicht hinzufügen";
   renderQuotes();
 }));
 quoteDialog.addEventListener("click", (event) => { if (event.target === quoteDialog) closeQuoteForm(); });

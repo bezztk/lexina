@@ -37,7 +37,10 @@ function statusBadge(word) {
   return word.status === "ready" ? "" : '<span class="inventory-status status-' + word.status + '">' + statusNames[word.status] + '</span>';
 }
 function wordCard(word,grouped = false) {
-  const englishContent = [word.englishTranslation,word.englishExampleSentence].filter(Boolean).map(escapeHtml).join(' <span class="word-separator">·</span> ');
+  const englishContent = [
+    word.englishTranslation ? '<span class="english-translation">' + escapeHtml(word.englishTranslation) + '</span>' : "",
+    word.englishExampleSentence ? '<span>' + escapeHtml(word.englishExampleSentence) + '</span>' : ""
+  ].filter(Boolean).join(' <span class="word-separator">·</span> ');
   const tags = word.tags.length ? '<div class="tags word-card-tags">' + word.tags.map(tag => '<span>' + escapeHtml(tag) + '</span>').join("") + '</div>' : "";
   const meta = tags + statusBadge(word);
   return '<article class="' + (grouped ? 'grouped-word-row' : 'card word-card inventory-card') + '"><div class="card-main"><div class="word-summary"><div class="word-title-line"><h3><button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button></h3>' +

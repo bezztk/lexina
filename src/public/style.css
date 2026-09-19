@@ -761,6 +761,7 @@ blockquote {
 .inline-word-meaning { overflow: hidden; color: #596372; font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
 .card-main .word-detail-line { display: flex; min-height: 1.15rem; gap: 0.35rem; margin: 0.18rem 0 0; color: #596372; font-size: 0.78rem; line-height: 1.3; }
 .detail-label { flex: 0 0 auto; color: #384252; font-weight: 650; }
+.english-translation { display: inline-block; padding: 0.02rem 0.3rem; border: 1px solid #898b58; border-radius: 2px; background: rgba(125, 129, 70, 0.13); color: #626438; font-size: 0.76rem; font-weight: 700; }
 .meaning-card-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .meaning-card-links { display: flex; min-width: 0; flex: 1 1 auto; align-items: baseline; gap: 0.65rem; }
 .meaning-assigned-words { display: flex; min-width: 0; align-items: baseline; gap: 0.35rem; flex-wrap: wrap; }

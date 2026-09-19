@@ -199,8 +199,12 @@ document.addEventListener("click", async (event) => {
     ["deleteWord", "words", loadWords], ["deleteQuote", "quotes", loadQuotes], ["deleteJournal", "journal", loadJournal], ["deleteTag", "tags", loadTags],
   ]) {
     const id = button.dataset[key];
-    if (id && window.confirm(key === "deleteWord" ? "Diese Worteinheit endgültig löschen? Ihre Beispiele, Übersetzungen und alle Zuordnungen werden entfernt." : "Eintrag wirklich löschen?")) {
-      try { await api(`/api/${endpoint}/${id}`, { method: "DELETE" }); await reload(); notify("Eintrag gelöscht."); }
+    if (id && window.confirm(key === "deleteWord" ? "Dieses Wort endgültig löschen?" : "Eintrag wirklich löschen?")) {
+      try {
+        await api(`/api/${endpoint}/${id}`, { method: "DELETE" });
+        if (key === "deleteWord" && wordDialog.open) closeWordForm();
+        await reload(); notify("Eintrag gelöscht.");
+      }
       catch { notify("Eintrag konnte nicht gelöscht werden."); }
     }
   }

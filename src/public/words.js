@@ -1,4 +1,4 @@
-const statusNames = { draft: "Entwurf", ready: "Bereit", learning: "Im Lernen" };
+const statusNames = { draft: "Entwurf", learning: "Lernen", ready: "Abgeschlossen" };
 let selectedSpaceId = null;
 const spaceDialog = () => document.querySelector("#space-dialog");
 const spaceForm = () => document.querySelector("#space-form");
@@ -17,34 +17,32 @@ async function loadWords() {
 function matchesWord(word) {
   const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();
   const space = state.spaces.find(item => item.id === word.meaningSpaceId);
-  const haystack = [word.term,word.meaning,word.note,word.exampleSentence,word.englishTranslation,word.englishExampleSentence,...word.tags,space?.label || ""].join(" ").toLocaleLowerCase();
+  const haystack = [word.term,word.meaning,word.note,word.exampleSentence,word.englishTranslation,word.englishExampleSentence,...word.tags,space?.label || "",space?.explanation || ""].join(" ").toLocaleLowerCase();
   return !query || haystack.includes(query);
 }
-function wordCard(word) {
+function statusBadge(word) {
+  return word.status === "ready" ? "" : '<span class="inventory-status status-' + word.status + '">' + statusNames[word.status] + '</span>';
+}
+function wordCard(word,grouped = false) {
   const space = state.spaces.find(item => item.id === word.meaningSpaceId);
-  return '<article class="card word-card inventory-card"><div class="card-main"><div class="word-summary"><h3><button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button></h3><span class="inventory-status status-' + word.status + '">' + statusNames[word.status] + '</span></div>' +
+  return '<article class="' + (grouped ? 'grouped-word-row' : 'card word-card inventory-card') + '"><div class="card-main"><div class="word-summary"><h3><button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button></h3>' + statusBadge(word) + '</div>' +
     (word.meaning ? '<p class="word-meaning">' + escapeHtml(word.meaning) + "</p>" : "") +
     (word.englishTranslation ? '<p class="word-translation">Englisch: ' + escapeHtml(word.englishTranslation) + "</p>" : "") +
     (word.tags.length ? '<div class="tags">' + word.tags.map(tag => '<span>' + escapeHtml(tag) + '</span>').join("") + '</div>' : '') +
-    '<p class="word-memberships">' + (space ? '<button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + "</button>" : "Ohne Bedeutungsraum") + '</p></div><button class="icon-button danger" data-delete-word="' + word.id + '" aria-label="' + escapeHtml(word.term) + ' endgültig löschen">' + icons.trash + "</button></article>";
+    (grouped ? "" : '<p class="word-memberships">' + (space ? '<button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + "</button>" : "Ohne Bedeutung") + "</p>") + "</div></article>";
 }
 function renderWords() {
   const words = state.words.filter(matchesWord);
-  const drafts = words.filter(w => w.status === "draft");
-  document.querySelector("#draft-count").textContent = "(" + drafts.length + ")";
-  document.querySelector("#draft-list").innerHTML = drafts.map(wordCard).join("") || empty("Keine Entwürfe für diese Auswahl.");
-  document.querySelector("#word-list").innerHTML = words.filter(w => w.status !== "draft").map(wordCard).join("") || empty("Keine weiteren Wörter für diese Auswahl.");
   const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();
-  const filtered = Boolean(query);
-  const spaces = state.spaces.filter(s => !filtered || s.wordIds.some(id => words.some(w => w.id === id)) || (!s.wordIds.length && query && s.label.toLocaleLowerCase().includes(query)));
-  document.querySelector("#space-list").innerHTML = spaces.map(space => {
-    const visibleWords = space.wordIds.map(id => words.find(w => w.id === id)).filter(Boolean);
-    return '<article class="card meaning-space-card"><div class="card-main"><div class="word-summary"><h3><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button></h3><div class="space-summary-words">' +
-      visibleWords.map(w => '<button class="word-link" data-edit-word="' + w.id + '">' + escapeHtml(w.term) + "</button>").join('<span aria-hidden="true"> · </span>') + '</div></div>' +
-      (space.note ? '<p class="word-meaning">' + escapeHtml(space.note) + "</p>" : "") +
-      (space.exampleSentences.length ? '<details><summary>Gemeinsame Beispiele</summary><ul>' + space.exampleSentences.map(s => "<li>" + escapeHtml(s) + "</li>").join("") + "</ul></details>" : "") +
-      '</div><div class="space-card-actions"><button data-edit-space="' + space.id + '">Bearbeiten</button><button class="icon-button danger" data-delete-space="' + space.id + '" aria-label="Bedeutungsraum löschen">' + icons.trash + "</button></div></article>";
-  }).join("") || empty("Keine Bedeutungsräume für diese Auswahl.");
+  const wordGroups = state.spaces.map(space => ({ space,words: words.filter(word => word.meaningSpaceId === space.id) })).filter(group => group.words.length);
+  const unassigned = words.filter(word => word.meaningSpaceId === null);
+  document.querySelector("#word-list").innerHTML = wordGroups.map(({ space,words: groupWords }) =>
+    '<article class="meaning-word-group"><header class="meaning-group-header"><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button><p>' + escapeHtml(space.explanation) + '</p></header><div class="meaning-group-words">' + groupWords.map(word => wordCard(word,true)).join("") + "</div></article>"
+  ).join("") + unassigned.map(word => wordCard(word)).join("") || empty("Keine Wörter für diese Suche.");
+  const spaces = state.spaces.filter(space => !query || [space.label,space.explanation].join(" ").toLocaleLowerCase().includes(query) || space.wordIds.some(id => words.some(word => word.id === id)));
+  document.querySelector("#space-list").innerHTML = spaces.map(space =>
+    '<article class="card meaning-space-card"><div class="card-main"><div class="meaning-card-summary"><h3><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button></h3><p>' + escapeHtml(space.explanation) + '</p></div></div></article>'
+  ).join("") || empty("Keine Bedeutungen für diese Suche.");
 }
 function renderSpaceOptions() {
   const query = document.querySelector("#word-space-search").value.trim().toLocaleLowerCase();
@@ -68,6 +66,9 @@ function openWordForm(word) {
   selectedSpaceId = word?.meaningSpaceId ?? null;
   updateWordSpaceAction();
   renderTagOptions("#word-tags",word?.tags || []);
+  const deleteButton = document.querySelector("#word-dialog [data-delete-word]");
+  deleteButton.hidden = !word;
+  deleteButton.dataset.deleteWord = word?.id || "";
   document.querySelector("#word-error").hidden = true;
   if (!wordDialog.open) wordDialog.showModal();
   wordForm.elements.term.focus();
@@ -90,14 +91,24 @@ function openSpaceForm(space) {
   const form = spaceForm();
   form.elements.id.value = space?.id || "";
   form.elements.label.value = space?.label || "";
-  form.elements.note.value = space?.note || "";
-  form.elements.examples.value = (space?.exampleSentences || []).join("\n");
+  form.elements.explanation.value = space?.explanation || "";
+  const deleteButton = document.querySelector("#space-dialog [data-delete-space]");
+  deleteButton.hidden = !space;
+  deleteButton.dataset.deleteSpace = space?.id || "";
   document.querySelector("#space-error").hidden = true;
   spaceDialog().showModal();
   form.elements.label.focus();
 }
 function initWordArea() {
   document.querySelector("#word-search").addEventListener("input",renderWords);
+  document.querySelectorAll("[data-word-section]").forEach(button => button.addEventListener("click",() => {
+    const section = button.dataset.wordSection;
+    document.querySelectorAll("[data-word-section]").forEach(item => {
+      item.classList.toggle("active",item === button); item.setAttribute("aria-selected",String(item === button));
+    });
+    document.querySelector("#word-overview").hidden = section !== "inventory";
+    document.querySelector("#meaning-overview").hidden = section !== "meanings";
+  }));
   document.querySelector("#word-space-search").addEventListener("input",renderSpaceOptions);
   wordForm.addEventListener("submit",async event => {
     event.preventDefault();
@@ -112,7 +123,7 @@ function initWordArea() {
     const button = form.querySelector('button:not([type="button"])');
     button.disabled = true;
     try {
-      const data = { label: form.elements.label.value,note: form.elements.note.value,exampleSentences: form.elements.examples.value.split("\n").filter(Boolean) };
+      const data = { label: form.elements.label.value,explanation: form.elements.explanation.value };
       await api(id ? "/api/spaces/" + id : "/api/spaces",{ method: id ? "PUT" : "POST",body: JSON.stringify(data) });
       spaceDialog().close(); await loadWords(); notify("Bedeutungsraum gespeichert.");
     } catch (error) { showEditorError("#space-error",error); } finally { button.disabled = false; }
@@ -135,7 +146,9 @@ function initWordArea() {
       }
       if (button.dataset.editSpace) openSpaceForm(state.spaces.find(s => s.id === Number(button.dataset.editSpace)));
       if (button.dataset.deleteSpace && window.confirm("Bedeutungsraum löschen? Seine Wörter bleiben erhalten.")) {
-        await api("/api/spaces/" + button.dataset.deleteSpace,{ method: "DELETE" }); await loadWords();
+        await api("/api/spaces/" + button.dataset.deleteSpace,{ method: "DELETE" });
+        if (spaceDialog().open) spaceDialog().close();
+        await loadWords(); notify("Bedeutung gelöscht.");
       }
     } catch (error) {
       if (wordDialog.open) showEditorError("#word-error",error);

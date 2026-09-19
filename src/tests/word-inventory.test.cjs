@@ -43,8 +43,10 @@ test("word schema stores one German example and one English translation pair dir
 
 test("a word stores at most one meaning space and replacing it overwrites the direct foreign key",() => {
   db.prepare("INSERT INTO tags(name) VALUES (?)").run("Adjektiv");
-  const a = repo.saveSpace(null,"Aufrichtigkeit","",[]);
-  const b = repo.saveSpace(null,"Korrektheit","",[]);
+  const a = repo.saveSpace(null,"Aufrichtigkeit","Offene und ehrliche Aussagen");
+  const b = repo.saveSpace(null,"Korrektheit","Sachlich richtige Aussagen");
+  assert.deepEqual(db.prepare("PRAGMA table_info(meaning_spaces)").all().map(column => column.name),["id","label","explanation","created_at"]);
+  assert.equal(a.explanation,"Offene und ehrliche Aussagen");
   const first = repo.createWord(input("falsch",{ meaning: "unaufrichtig",meaningSpaceId: a.id,tags: ["Adjektiv"] }));
   const second = repo.createWord(input("falsch",{ meaning: "nicht korrekt",meaningSpaceId: a.id }));
   assert.deepEqual(first.tags,["Adjektiv"]);
@@ -85,7 +87,8 @@ test("HTTP validates and persists the simplified word shape alongside other cont
   }
   try {
     await request("/api/tags","POST",{ name: "Test" });
-    const space = await request("/api/spaces","POST",{ label: "Tempo" });
+    const space = await request("/api/spaces","POST",{ label: "Tempo",explanation: "Wörter für Geschwindigkeit" });
+    assert.equal(space.data.explanation,"Wörter für Geschwindigkeit");
     const created = await request("/api/words","POST",{
       term: "schnell",status: "draft",meaning: "mit hohem Tempo",exampleSentence: "Er läuft schnell.",
       englishTranslation: "fast",englishExampleSentence: "He runs fast.",meaningSpaceId: space.data.id,tags: ["Test"],

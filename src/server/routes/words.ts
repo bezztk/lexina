@@ -59,9 +59,8 @@ for (const method of ["post", "put"] as const) {
   spacesRouter[method](method === "post" ? "/" : "/:id", safe((request,response) => {
     const spaceId = method === "post" ? null : id(request.params.id);
     const label = text(request.body?.label);
-    const examples = textList(request.body?.exampleSentences);
-    if (!label || !examples || (method === "put" && spaceId === null)) return response.status(400).json({ error: "Bezeichnung oder Beispiele sind ungültig." });
-    const space = saveSpace(spaceId,label,text(request.body?.note),examples);
+    if (!label || (method === "put" && spaceId === null)) return response.status(400).json({ error: "Bezeichnung ist ungültig." });
+    const space = saveSpace(spaceId,label,text(request.body?.explanation));
     return space ? response.status(method === "post" ? 201 : 200).json(space) : response.status(404).json({ error: "Bedeutungsraum nicht gefunden." });
   }));
 }

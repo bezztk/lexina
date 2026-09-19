@@ -7,7 +7,7 @@ export interface WordInput {
   meaningSpaceId: number | null; tags?: string[];
 }
 export interface Word extends Omit<WordInput, "tags"> { id: number; createdAt: string; tags: string[] }
-export interface Space { id: number; label: string; note: string; exampleSentences: string[]; wordIds: number[] }
+export interface Space { id: number; label: string; explanation: string; wordIds: number[] }
 const selectWord = `SELECT id,term,meaning,note,status,example_sentence AS exampleSentence,
   english_translation AS englishTranslation,english_example_sentence AS englishExampleSentence,
   meaning_space_id AS meaningSpaceId,created_at AS createdAt FROM word_units`;
@@ -20,7 +20,7 @@ function hydrate(row: Record<string, unknown>): Word {
   } as Word;
 }
 export function listWords(): Word[] {
-  return (db.prepare(selectWord + " ORDER BY CASE status WHEN 'draft' THEN 0 ELSE 1 END,created_at DESC,id DESC").all() as Record<string, unknown>[]).map(hydrate);
+  return (db.prepare(selectWord + " ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'learning' THEN 1 ELSE 2 END,created_at DESC,id DESC").all() as Record<string, unknown>[]).map(hydrate);
 }
 export function getWord(id: number): Word | null {
   const row = db.prepare(selectWord + " WHERE id=?").get(id) as Record<string, unknown> | undefined;
@@ -54,14 +54,14 @@ export const updateWord = db.transaction((id: number,input: WordInput): Word | n
 export function deleteWord(id: number): boolean { return db.prepare("DELETE FROM word_units WHERE id=?").run(id).changes > 0; }
 
 export function listSpaces(): Space[] {
-  return (db.prepare("SELECT id,label,note,examples FROM meaning_spaces ORDER BY label COLLATE NOCASE,id").all() as Record<string, unknown>[]).map(row => ({
-    id: Number(row.id), label: String(row.label), note: String(row.note), exampleSentences: JSON.parse(String(row.examples)),
+  return (db.prepare("SELECT id,label,explanation FROM meaning_spaces ORDER BY label COLLATE NOCASE,id").all() as Record<string, unknown>[]).map(row => ({
+    id: Number(row.id), label: String(row.label), explanation: String(row.explanation),
     wordIds: (db.prepare("SELECT id FROM word_units WHERE meaning_space_id=? ORDER BY created_at,id").all(Number(row.id)) as { id: number }[]).map(r => r.id),
   }));
 }
-export const saveSpace = db.transaction((id: number | null,label: string,note: string,examples: string[]): Space | null => {
-  if (id === null) id = Number(db.prepare("INSERT INTO meaning_spaces(label,note,examples) VALUES (?,?,?)").run(label,note,JSON.stringify(examples)).lastInsertRowid);
-  else if (!db.prepare("UPDATE meaning_spaces SET label=?,note=?,examples=? WHERE id=?").run(label,note,JSON.stringify(examples),id).changes) return null;
+export const saveSpace = db.transaction((id: number | null,label: string,explanation: string): Space | null => {
+  if (id === null) id = Number(db.prepare("INSERT INTO meaning_spaces(label,explanation) VALUES (?,?)").run(label,explanation).lastInsertRowid);
+  else if (!db.prepare("UPDATE meaning_spaces SET label=?,explanation=? WHERE id=?").run(label,explanation,id).changes) return null;
   return listSpaces().find(s => s.id === id)!;
 });
 export function deleteSpace(id: number): boolean { return db.prepare("DELETE FROM meaning_spaces WHERE id=?").run(id).changes > 0; }

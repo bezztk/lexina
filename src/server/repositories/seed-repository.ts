@@ -11,9 +11,9 @@ export interface SeedResult {
 const demoTags = ["Alltag","Achtsamkeit","Aufrichtigkeit","Gefühl","Literatur","Natur","Sprache"];
 
 const demoSpaces = [
-  { label: "Achtsame Bewegung",note: "Wörter für ruhige, bewusste Bewegung.",examples: ["Sie ging behutsam durch den stillen Garten."] },
-  { label: "Aufrichtigkeit",note: "Offene und ehrliche Formen des Ausdrucks.",examples: ["Seine Antwort war aufrichtig und klar."] },
-  { label: "Vergänglichkeit",note: "Eindrücke und Dinge, die nicht von Dauer sind.",examples: ["Der flüchtige Moment blieb trotzdem in Erinnerung."] },
+  { label: "Achtsame Bewegung",explanation: "Wörter für ruhige, bewusste Bewegung." },
+  { label: "Aufrichtigkeit",explanation: "Offene und ehrliche Formen des Ausdrucks." },
+  { label: "Vergänglichkeit",explanation: "Eindrücke und Dinge, die nicht von Dauer sind." },
 ];
 
 const demoWords = [
@@ -54,7 +54,7 @@ export const seedDemoData = db.transaction((date: string): SeedResult => {
   for (const space of demoSpaces) {
     let row = db.prepare("SELECT id FROM meaning_spaces WHERE label=? COLLATE NOCASE").get(space.label) as { id: number } | undefined;
     if (!row) {
-      const id = Number(db.prepare("INSERT INTO meaning_spaces(label,note,examples) VALUES (?,?,?)").run(space.label,space.note,JSON.stringify(space.examples)).lastInsertRowid);
+      const id = Number(db.prepare("INSERT INTO meaning_spaces(label,explanation) VALUES (?,?)").run(space.label,space.explanation).lastInsertRowid);
       row = { id }; result.spaces++;
     }
     spaceIds.set(space.label,row.id);

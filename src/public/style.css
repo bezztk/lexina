@@ -682,12 +682,21 @@ blockquote {
 
 /* Word inventory: compact cards and controls that also work with touch. */
 .word-search-wrap { width: min(100%, 760px); margin: 0 0 1.2rem auto; }
-#words-view > section { margin-top: 1.4rem; }
-#words-view > section > h2 { font-size: 1rem; margin: 0 0 0.65rem; }
-#words-view .draft-section { border-top: 3px solid #ad6200; padding-top: 0.9rem; }
+#words-view > section { margin-top: 1rem; }
+.word-section-switch { display: inline-flex; border-bottom: 1px solid #cfd4dc; }
+.word-section-switch button { min-width: 7rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #69727f; }
+.word-section-switch button.active { border-color: #315bd6; color: #2448af; font-weight: 650; }
+.word-section-panel[hidden] { display: none; }
+.grouped-word-list { display: grid; gap: 0.85rem; }
+.meaning-word-group { overflow: hidden; border: 1px solid #cfd4dc; background: rgba(255,255,255,0.72); }
+.meaning-group-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.65rem 0.8rem; border-bottom: 1px solid #cfd4dc; background: #f8f9fa; }
+.meaning-group-header > p { margin: 0; color: #657080; font-size: 0.8rem; text-align: right; }
+.meaning-group-words { display: grid; }
+.grouped-word-row { padding: 0.7rem 0.8rem; }
+.grouped-word-row + .grouped-word-row { border-top: 1px solid #e1e4e8; }
 .section-hint { font-size: 0.8rem; color: #596372; margin: 0 0 0.7rem; }
 .inventory-card.word-card { padding: 0.7rem 0.8rem; display: flex; align-items: start; gap: 0.7rem; }
-.inventory-card h3, .meaning-space-card h3 { margin: 0; font-size: 0.92rem; }
+.inventory-card h3, .grouped-word-row h3, .meaning-space-card h3 { margin: 0; font-size: 0.92rem; }
 .word-link, .space-link { min-height: 0; padding: 0.1rem 0; background: transparent; border: none; text-align: left; color: inherit; }
 .word-link { font-weight: 600; }
 .space-link { font-weight: 700; }
@@ -701,12 +710,8 @@ blockquote {
 .card-main .word-meaning { margin: 0.35rem 0 0; font-size: 0.83rem; }
 .card-main .word-translation { margin: 0.35rem 0 0; font-size: 0.78rem; color: #536174; }
 .card-main .word-memberships { margin: 0.35rem 0 0; font-size: 0.75rem; color: #707987; }
-.meaning-space-card { display: flex; gap: 0.8rem; align-items: start; }
-.meaning-space-card .word-summary { align-items: baseline; }
-.space-summary-words { font-size: 0.86rem; }
-.space-summary-words small { font-weight: normal; color: #707987; font-size: 0.7rem; }
-.space-card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: end; }
-.space-card-actions > button:first-child { font-size: 0.75rem; }
+.meaning-card-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.meaning-card-summary p { text-align: right; }
 .space-picker-options { max-height: 16rem; overflow-y: auto; display: grid; gap: 0.35rem; }
 .space-picker-option { display: flex; width: 100%; justify-content: space-between; text-align: left; }
 .space-picker-option.selected { border-color: #315bd6; background: #edf1ff; color: #2448af; }
@@ -716,6 +721,8 @@ blockquote {
 .legacy-details { font-size: 0.72rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 button:disabled { opacity: 0.45; cursor: default; }
 @media (max-width: 640px) {
-  .meaning-space-card { flex-direction: column; }
-  .meaning-space-card .word-summary { flex-direction: column; gap: 0.3rem; }
+  .word-section-switch { display: flex; }
+  .word-section-switch button { flex: 1; }
+  .meaning-group-header, .meaning-card-summary { align-items: start; flex-direction: column; gap: 0.3rem; }
+  .meaning-group-header > p, .meaning-card-summary p { text-align: left; }
 }

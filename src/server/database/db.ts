@@ -44,12 +44,19 @@ db.exec(`
   DROP TABLE IF EXISTS schema_migrations;
 `);
 
+const meaningTable = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='meaning_spaces'").get();
+const meaningColumns = meaningTable
+  ? (db.prepare("PRAGMA table_info(meaning_spaces)").all() as { name: string }[]).map(column => column.name)
+  : [];
+if (meaningColumns.includes("note") && !meaningColumns.includes("explanation"))
+  db.exec("ALTER TABLE meaning_spaces RENAME COLUMN note TO explanation");
+if (meaningColumns.includes("examples")) db.exec("ALTER TABLE meaning_spaces DROP COLUMN examples");
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS meaning_spaces (
     id INTEGER PRIMARY KEY,
     label TEXT NOT NULL CHECK(length(trim(label)) > 0),
-    note TEXT NOT NULL DEFAULT '',
-    examples TEXT NOT NULL DEFAULT '[]',
+    explanation TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
 

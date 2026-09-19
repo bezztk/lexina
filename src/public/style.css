@@ -708,11 +708,12 @@ blockquote {
 /* Word inventory: compact cards and controls that also work with touch. */
 .word-search-wrap { width: min(100%, 560px); margin: 0 0 1.2rem auto; }
 #words-view > section { margin-top: 1rem; }
-.word-inventory-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #cfd4dc; }
+.word-inventory-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .word-section-switch { display: inline-flex; }
 .word-section-switch button { min-width: 7rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #69727f; }
 .word-section-switch button.active { border-color: #315bd6; color: #2448af; font-weight: 650; }
 .word-filters { display: flex; align-items: center; gap: 0.45rem; padding-bottom: 0.35rem; }
+.word-filters[hidden] { display: none; }
 .word-filter-select { display: block; min-width: 8.5rem; }
 .word-filter-select[hidden] { display: none; }
 .word-filter-select select { min-height: 2rem; padding: 0.35rem 1.8rem 0.35rem 0.55rem; font-size: 0.8rem; }
@@ -791,6 +792,21 @@ body {
     radial-gradient(circle at 18% 12%, rgba(255, 250, 230, 0.62), transparent 33rem),
     linear-gradient(112deg, #ddd0b7 0%, #d4c3a5 52%, #dfd2ba 100%);
   background-attachment: fixed;
+}
+
+::selection { background: rgba(154, 98, 67, 0.34); color: #2f241b; }
+input, textarea, select { accent-color: #925b3d; }
+option:checked { background: #6d7040; color: #fffaf0; }
+option:hover, option:focus { background: #b87855; color: #fffaf0; }
+
+@supports (appearance: base-select) {
+  select, ::picker(select) { appearance: base-select; }
+  select::picker-icon { display: none; }
+  ::picker(select) { margin-top: 0.25rem; border: 1px solid #a68c6c; border-radius: 3px; background: #f3e7cf; box-shadow: 0 12px 28px rgba(67, 48, 29, 0.22); color: #453629; }
+  select option { padding: 0.48rem 0.65rem; background: #f3e7cf; }
+  select option:hover, select option:focus { background: #b87855; color: #fffaf0; }
+  select option:checked { background: #6d7040; color: #fffaf0; }
+  select option::checkmark { color: currentColor; }
 }
 
 h1, h2, .brand { font-family: Georgia, "Times New Roman", serif; }

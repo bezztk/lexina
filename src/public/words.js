@@ -133,6 +133,7 @@ function initWordArea() {
     document.querySelectorAll("[data-word-section]").forEach(item => {
       item.classList.toggle("active",item === button); item.setAttribute("aria-selected",String(item === button));
     });
+    document.querySelector(".word-filters").hidden = section !== "inventory";
     document.querySelector("#word-overview").hidden = section !== "inventory";
     document.querySelector("#meaning-overview").hidden = section !== "meanings";
   }));

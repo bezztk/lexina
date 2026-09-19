@@ -551,10 +551,6 @@ blockquote {
   pointer-events: auto;
 }
 
-.date-picker { display: block; min-width: 10rem; }
-.journal-heading-actions > * { height: 2.25rem; min-height: 2.25rem; }
-.journal-heading-actions .date-picker input { height: 100%; }
-
 .heading-actions {
   display: flex;
   align-items: end;

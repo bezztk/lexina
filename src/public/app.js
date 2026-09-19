@@ -11,7 +11,6 @@ const quoteForm = document.querySelector("#quote-form");
 const quoteDialog = document.querySelector("#quote-dialog");
 const journalForm = document.querySelector("#journal-form");
 const journalDialog = document.querySelector("#journal-dialog");
-const journalDate = document.querySelector("#journal-date");
 const tagForm = document.querySelector("#tag-form");
 const tagDialog = document.querySelector("#tag-dialog");
 let selectedTextType = "quote";
@@ -148,7 +147,7 @@ async function loadJournal() {
 function resetJournalForm() {
   journalForm.reset();
   journalForm.elements.id.value = "";
-  journalForm.elements.entryAt.value = `${journalDate.value}T${localDateTime().slice(11)}`;
+  journalForm.elements.entryAt.value = localDateTime();
 }
 
 function openJournalForm(entry) {
@@ -176,7 +175,7 @@ journalForm.addEventListener("submit", async (event) => {
   data.tags = selectedTags("#journal-tags");
   try {
     await api(id ? `/api/journal/${id}` : "/api/journal", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
-    journalDate.value = String(data.entryAt).slice(0, 10); closeJournalForm(); await loadJournal(); notify("Journaleintrag gespeichert.");
+    closeJournalForm(); await loadJournal(); notify("Journaleintrag gespeichert.");
   } catch { notify("Journaleintrag konnte nicht gespeichert werden."); }
 });
 
@@ -252,8 +251,6 @@ tagDialog.addEventListener("click", (event) => { if (event.target === tagDialog)
 
 document.querySelectorAll(".nav-button").forEach((button) => button.addEventListener("click", () => { location.hash = button.dataset.view; }));
 window.addEventListener("hashchange", () => showView(location.hash.slice(1) || "words"));
-journalDate.value = localDateTime().slice(0, 10);
-journalDate.addEventListener("change", resetJournalForm);
 resetJournalForm();
 initWordArea();
 initVocabularyArea();

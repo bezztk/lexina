@@ -7,7 +7,6 @@ import {
 } from "../repositories/journal-repository.js";
 
 export const journalRouter = Router();
-const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const dateTimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/;
 
 function parseInput(body: unknown): { content: string; entryAt: string; tags: string[] } | null {
@@ -19,11 +18,7 @@ function parseInput(body: unknown): { content: string; entryAt: string; tags: st
   return content && dateTimePattern.test(entryAt) ? { content, entryAt, tags } : null;
 }
 
-journalRouter.get("/", (request, response) => {
-  const date = typeof request.query.date === "string" ? request.query.date : "";
-  if (!datePattern.test(date)) return response.status(400).json({ error: "Ungültiges Datum." });
-  return response.json(listJournalEntries(date));
-});
+journalRouter.get("/", (_request, response) => response.json(listJournalEntries(50)));
 
 journalRouter.post("/", (request, response) => {
   const input = parseInput(request.body);

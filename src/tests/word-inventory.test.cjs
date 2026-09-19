@@ -119,14 +119,22 @@ test("HTTP validates and persists the simplified word shape alongside other cont
     assert.equal(seeded.status,200);
     assert.ok(seeded.data.tags > 0 && seeded.data.spaces > 0 && seeded.data.words > 0);
     assert.equal(seeded.data.quotes,5); assert.equal(seeded.data.journalEntries,5);
-    const demoJournal = await request("/api/journal?date=2026-09-19");
-    assert.equal(demoJournal.data.length,5);
+    const demoJournal = await request("/api/journal");
+    assert.equal(demoJournal.data.length,6);
+    assert.ok(demoJournal.data.slice(0,5).every(entry => entry.entryAt.startsWith("2026-09-19")));
+    assert.ok(demoJournal.data[5].entryAt.startsWith("2026-09-18"));
     assert.ok(demoJournal.data.every(entry => entry.tags.length));
     const demoWords = await request("/api/words");
     const stroll = demoWords.data.find(word => word.term === "schlendern");
     assert.ok(stroll.meaningSpaceId && stroll.tags.includes("Natur"));
     const secondSeed = await request("/api/seed","POST",{ date: "2026-09-19" });
     assert.deepEqual(secondSeed.data,{ tags: 0,spaces: 0,words: 0,quotes: 0,journalEntries: 0 });
+    const insertJournal = db.prepare("INSERT INTO journal_entries(content,entry_at) VALUES (?,?)");
+    for (let minute = 0;minute < 51;minute += 1) insertJournal.run(`Eintrag ${minute}`,`2026-09-20T00:${String(minute).padStart(2,"0")}`);
+    const latestJournal = await request("/api/journal");
+    assert.equal(latestJournal.data.length,50);
+    assert.equal(latestJournal.data[0].entryAt,"2026-09-20T00:01");
+    assert.equal(latestJournal.data[49].entryAt,"2026-09-20T00:50");
     assert.deepEqual(db.pragma("foreign_key_check"),[]);
   } finally { await new Promise(resolve => server.close(resolve)); }
 });

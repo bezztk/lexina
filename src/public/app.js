@@ -126,12 +126,22 @@ quoteForm.addEventListener("submit", async (event) => {
 
 async function loadJournal() {
   try {
-    [state.journal] = await Promise.all([api(`/api/journal?date=${journalDate.value}`),loadTags()]);
-    document.querySelector("#journal-list").innerHTML = state.journal.length ? state.journal.map((entry) => `
-      <article class="card journal-card">
-        <time datetime="${entry.entryAt}">${escapeHtml(entry.entryAt.slice(11, 16))}</time>
-        <div class="card-main"><div class="journal-card-header"><button class="journal-content" data-edit-journal="${entry.id}">${escapeHtml(entry.content)}</button>${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}</div></div>
-      </article>`).join("") : empty("Für diesen Tag gibt es noch keinen Eintrag.");
+    [state.journal] = await Promise.all([api("/api/journal"),loadTags()]);
+    const groups = new Map();
+    state.journal.forEach(entry => {
+      const date = entry.entryAt.slice(0,10);
+      if (!groups.has(date)) groups.set(date,[]);
+      groups.get(date).push(entry);
+    });
+    document.querySelector("#journal-list").innerHTML = state.journal.length ? [...groups].map(([date,entries]) => `
+      <section class="journal-day-group">
+        <h2 class="journal-day-heading"><time datetime="${date}">${new Intl.DateTimeFormat("de-DE",{ weekday: "long",day: "2-digit",month: "long",year: "numeric" }).format(new Date(`${date}T00:00:00`))}</time></h2>
+        <div class="list timeline">${entries.map((entry) => `
+          <article class="card journal-card">
+            <time datetime="${entry.entryAt}">${escapeHtml(entry.entryAt.slice(11, 16))}</time>
+            <div class="card-main"><div class="journal-card-header"><button class="journal-content" data-edit-journal="${entry.id}">${escapeHtml(entry.content)}</button>${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}</div></div>
+          </article>`).join("")}</div>
+      </section>`).join("") : empty("Noch keine Journaleinträge vorhanden.");
   } catch { notify("Journal konnte nicht geladen werden."); }
 }
 
@@ -243,7 +253,7 @@ tagDialog.addEventListener("click", (event) => { if (event.target === tagDialog)
 document.querySelectorAll(".nav-button").forEach((button) => button.addEventListener("click", () => { location.hash = button.dataset.view; }));
 window.addEventListener("hashchange", () => showView(location.hash.slice(1) || "words"));
 journalDate.value = localDateTime().slice(0, 10);
-journalDate.addEventListener("change", () => { resetJournalForm(); loadJournal(); });
+journalDate.addEventListener("change", resetJournalForm);
 resetJournalForm();
 initWordArea();
 initVocabularyArea();

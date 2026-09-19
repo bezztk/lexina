@@ -26,14 +26,14 @@ function hydrate(entry: Omit<JournalEntry, "tags">): JournalEntry {
   return { ...entry,tags: tags.map(tag => tag.name) };
 }
 
-export function listJournalEntries(date: string): JournalEntry[] {
-  const entries = db.prepare<string>(`
+export function listJournalEntries(limit = 50): JournalEntry[] {
+  const entries = db.prepare<number>(`
     SELECT id, content, entry_at AS entryAt, created_at AS createdAt,
       updated_at AS updatedAt
     FROM journal_entries
-    WHERE substr(entry_at, 1, 10) = ?
-    ORDER BY entry_at ASC
-  `).all(date) as Omit<JournalEntry, "tags">[];
+    WHERE id IN (SELECT id FROM journal_entries ORDER BY entry_at DESC,id DESC LIMIT ?)
+    ORDER BY substr(entry_at,1,10) DESC,entry_at ASC,id ASC
+  `).all(limit) as Omit<JournalEntry, "tags">[];
   return entries.map(hydrate);
 }
 

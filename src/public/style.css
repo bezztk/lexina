@@ -563,17 +563,20 @@ blockquote {
 
 .timeline .journal-card {
   position: relative;
+  min-height: 0;
   align-items: start;
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
 }
 
-.journal-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.journal-card-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .journal-card-header .tags { flex: 0 0 auto; justify-content: flex-end; margin: 0 0 0 auto; }
 .journal-content { display: block; min-width: 0; min-height: 0; padding: 0; border: 0; background: transparent; color: #303640; line-height: 1.45; text-align: left; white-space: pre-wrap; }
 .journal-content:hover { background: transparent; color: #2448af; text-decoration: underline; text-underline-offset: 0.16em; }
 
 .journal-card time {
   min-width: 3rem;
-  padding-top: 0.08rem;
+  padding-top: 0.2rem;
   color: #536174;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 0.78rem;
@@ -751,7 +754,7 @@ blockquote {
 .status-draft { color: #ad6200; }
 .status-ready { color: #21815a; }
 .status-learning { color: #315bd6; }
-.inventory-card .word-summary, .grouped-word-row .word-summary { min-height: 0; align-items: start; justify-content: space-between; }
+.inventory-card .word-summary, .grouped-word-row .word-summary { min-height: 0; align-items: center; justify-content: space-between; }
 .word-title-line { display: flex; min-width: 0; align-items: baseline; gap: 0.4rem; }
 .word-card-meta { display: flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: 0.45rem; }
 .word-card-meta .tags { justify-content: flex-end; margin: 0 !important; }
@@ -769,6 +772,7 @@ blockquote {
 .word-primary-fields { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(9rem, 1fr); gap: 0.9rem; }
 .language-section { display: grid; gap: 0.65rem; padding: 0.75rem; border: 1px solid #d8dce2; background: #f8f9fa; }
 #quote-form textarea[name="content"] { height: 7.25rem; min-height: 7.25rem; overflow-y: auto; resize: none; }
+#journal-form textarea[name="content"] { height: 7.25rem; min-height: 7.25rem; overflow-y: auto; resize: none; }
 .editor-error { background: #fff1f1; color: #8e252b; padding: 0.65rem; border-left: 3px solid #aa2f35; }
 .editor-error[hidden] { display: none; }
 .legacy-details { font-size: 0.72rem; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -789,18 +793,18 @@ button:disabled { opacity: 0.45; cursor: default; }
 /* Experimental sand-paper theme. Kept as one block so it can be removed cleanly. */
 :root {
   color: #3b3126;
-  background: #c7bda8;
+  background: #cdb994;
   font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
 }
 
 body {
   color: #3b3126;
-  background-color: #c7bda8;
+  background-color: #cdb994;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .22' numOctaves='3' seed='11'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.2'/%3E%3C/svg%3E"),
     repeating-linear-gradient(94deg, transparent 0 22px, rgba(86, 72, 53, 0.025) 23px, transparent 24px 46px),
-    radial-gradient(circle at 18% 12%, rgba(249, 242, 222, 0.42), transparent 33rem),
-    linear-gradient(112deg, #d2c8b3 0%, #c2b69f 52%, #cec4af 100%);
+    radial-gradient(circle at 18% 12%, rgba(255, 241, 207, 0.46), transparent 33rem),
+    linear-gradient(112deg, #d8c39e 0%, #c7ae83 52%, #d4bc94 100%);
   background-attachment: fixed;
 }
 

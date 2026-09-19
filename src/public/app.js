@@ -127,10 +127,9 @@ async function loadJournal() {
   try {
     [state.journal] = await Promise.all([api(`/api/journal?date=${journalDate.value}`),loadTags()]);
     document.querySelector("#journal-list").innerHTML = state.journal.length ? state.journal.map((entry) => `
-      <article class="card journal-card hover-card" tabindex="0">
+      <article class="card journal-card">
         <time datetime="${entry.entryAt}">${escapeHtml(entry.entryAt.slice(11, 16))}</time>
-        <div class="card-main"><p>${escapeHtml(entry.content)}</p>${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}</div>
-        <div class="card-hover-actions"><button class="icon-button" data-edit-journal="${entry.id}" aria-label="Journaleintrag bearbeiten">${icons.pencil}</button><button class="icon-button danger" data-delete-journal="${entry.id}" aria-label="Journaleintrag löschen">${icons.trash}</button></div>
+        <div class="card-main"><div class="journal-card-header"><button class="journal-content" data-edit-journal="${entry.id}">${escapeHtml(entry.content)}</button>${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}</div></div>
       </article>`).join("") : empty("Für diesen Tag gibt es noch keinen Eintrag.");
   } catch { notify("Journal konnte nicht geladen werden."); }
 }
@@ -150,6 +149,9 @@ function openJournalForm(entry) {
     journalForm.elements.content.value = entry.content;
   }
   renderTagOptions("#journal-tags",entry?.tags || []);
+  const deleteButton = document.querySelector("#journal-dialog [data-delete-journal]");
+  deleteButton.hidden = !entry;
+  deleteButton.dataset.deleteJournal = entry?.id || "";
   journalDialog.showModal();
   journalForm.elements.content.focus();
 }
@@ -214,6 +216,7 @@ document.addEventListener("click", async (event) => {
         await api(`/api/${endpoint}/${id}`, { method: "DELETE" });
         if (key === "deleteWord" && wordDialog.open) closeWordForm();
         if (key === "deleteQuote" && quoteDialog.open) closeQuoteForm();
+        if (key === "deleteJournal" && journalDialog.open) closeJournalForm();
         await reload(); notify("Eintrag gelöscht.");
       }
       catch { notify("Eintrag konnte nicht gelöscht werden."); }

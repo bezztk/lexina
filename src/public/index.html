@@ -126,7 +126,7 @@
 
       <dialog id="journal-dialog" aria-labelledby="journal-dialog-title">
         <form id="journal-form" class="modal-form">
-          <header class="modal-header"><h2 id="journal-dialog-title">Journaleintrag hinzufügen</h2><button type="button" class="icon-button close-button" data-action="close-journal" aria-label="Schließen">×</button></header>
+          <header class="modal-header"><h2 id="journal-dialog-title">Journaleintrag hinzufügen</h2><div class="modal-header-actions"><button type="button" class="icon-button danger" data-delete-journal aria-label="Journaleintrag löschen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button><button type="button" class="icon-button close-button" data-action="close-journal" aria-label="Schließen">×</button></div></header>
           <div class="modal-body">
             <input type="hidden" name="id" />
             <label>Zeitpunkt<input name="entryAt" type="datetime-local" required /></label>

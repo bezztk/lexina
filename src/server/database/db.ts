@@ -22,7 +22,7 @@ const wordTable = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND
 const wordColumns = wordTable
   ? (db.prepare("PRAGMA table_info(word_units)").all() as { name: string }[]).map(column => column.name)
   : [];
-const currentWordColumns = ["id","term","meaning","note","status","example_sentence","english_translation","english_example_sentence","created_at"];
+const currentWordColumns = ["id","term","meaning","note","status","example_sentence","english_translation","english_example_sentence","meaning_space_id","created_at"];
 if (wordTable && (wordColumns.length !== currentWordColumns.length || currentWordColumns.some(column => !wordColumns.includes(column)))) {
   db.exec(`
     DROP TABLE IF EXISTS word_tags;
@@ -35,6 +35,7 @@ if (wordTable && (wordColumns.length !== currentWordColumns.length || currentWor
 }
 
 db.exec(`
+  DROP TABLE IF EXISTS space_words;
   DROP TABLE IF EXISTS unit_examples;
   DROP TABLE IF EXISTS translations;
   DROP TABLE IF EXISTS similar_words;
@@ -44,6 +45,14 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS meaning_spaces (
+    id INTEGER PRIMARY KEY,
+    label TEXT NOT NULL CHECK(length(trim(label)) > 0),
+    note TEXT NOT NULL DEFAULT '',
+    examples TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
   CREATE TABLE IF NOT EXISTS word_units (
     id INTEGER PRIMARY KEY,
     term TEXT NOT NULL CHECK(length(trim(term)) > 0),
@@ -53,27 +62,12 @@ db.exec(`
     example_sentence TEXT NOT NULL DEFAULT '',
     english_translation TEXT NOT NULL DEFAULT '',
     english_example_sentence TEXT NOT NULL DEFAULT '',
+    meaning_space_id INTEGER REFERENCES meaning_spaces(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS meaning_spaces (
-    id INTEGER PRIMARY KEY,
-    label TEXT NOT NULL CHECK(length(trim(label)) > 0),
-    note TEXT NOT NULL DEFAULT '',
-    examples TEXT NOT NULL DEFAULT '[]',
-    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS space_words (
-    space_id INTEGER NOT NULL REFERENCES meaning_spaces(id) ON DELETE CASCADE,
-    word_id INTEGER NOT NULL REFERENCES word_units(id) ON DELETE CASCADE,
-    position INTEGER NOT NULL,
-    PRIMARY KEY(space_id,word_id),
-    UNIQUE(space_id,position)
   );
 
   CREATE INDEX IF NOT EXISTS idx_unit_status_created ON word_units(status,created_at DESC,id DESC);
-  CREATE INDEX IF NOT EXISTS idx_space_words_word ON space_words(word_id);
+  CREATE INDEX IF NOT EXISTS idx_unit_meaning_space ON word_units(meaning_space_id);
 
   CREATE TABLE IF NOT EXISTS quotes (
     id INTEGER PRIMARY KEY,

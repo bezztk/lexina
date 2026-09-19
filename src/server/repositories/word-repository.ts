@@ -4,19 +4,18 @@ export type WordStatus = (typeof WORD_STATUSES)[number];
 export interface WordInput {
   term: string; meaning: string; note: string; status: WordStatus;
   exampleSentence: string; englishTranslation: string; englishExampleSentence: string;
-  spaceIds: number[]; tags?: string[];
+  meaningSpaceId: number | null; tags?: string[];
 }
 export interface Word extends Omit<WordInput, "tags"> { id: number; createdAt: string; tags: string[] }
 export interface Space { id: number; label: string; note: string; exampleSentences: string[]; wordIds: number[] }
 const selectWord = `SELECT id,term,meaning,note,status,example_sentence AS exampleSentence,
   english_translation AS englishTranslation,english_example_sentence AS englishExampleSentence,
-  created_at AS createdAt FROM word_units`;
+  meaning_space_id AS meaningSpaceId,created_at AS createdAt FROM word_units`;
 
 function hydrate(row: Record<string, unknown>): Word {
   const id = Number(row.id);
   return {
     ...row,
-    spaceIds: (db.prepare("SELECT space_id AS id FROM space_words WHERE word_id=? ORDER BY space_id").all(id) as { id: number }[]).map(r => r.id),
     tags: (db.prepare("SELECT t.name FROM tags t JOIN word_tags wt ON wt.tag_id=t.id WHERE wt.word_id=? ORDER BY t.name COLLATE NOCASE").all(id) as { name: string }[]).map(r => r.name),
   } as Word;
 }
@@ -28,13 +27,8 @@ export function getWord(id: number): Word | null {
   return row ? hydrate(row) : null;
 }
 function replaceDetails(id: number, input: WordInput): void {
-  for (const spaceId of input.spaceIds) if (!db.prepare("SELECT 1 FROM meaning_spaces WHERE id=?").get(spaceId)) throw new Error("Bedeutungsraum nicht gefunden.");
-  // Keep existing positions in every space; append newly selected memberships.
-  const current = getWord(id)!.spaceIds;
-  for (const spaceId of current) if (!input.spaceIds.includes(spaceId)) db.prepare("DELETE FROM space_words WHERE space_id=? AND word_id=?").run(spaceId,id);
-  for (const spaceId of input.spaceIds) if (!current.includes(spaceId)) {
-    db.prepare("INSERT INTO space_words(space_id,word_id,position) SELECT ?,?,COALESCE(MAX(position),-1)+1 FROM space_words WHERE space_id=?").run(spaceId,id,spaceId);
-  }
+  if (input.meaningSpaceId !== null && !db.prepare("SELECT 1 FROM meaning_spaces WHERE id=?").get(input.meaningSpaceId))
+    throw new Error("Bedeutungsraum nicht gefunden.");
   db.prepare("DELETE FROM word_tags WHERE word_id=?").run(id);
   const findTag = db.prepare("SELECT id FROM tags WHERE name=? COLLATE NOCASE");
   const linkTag = db.prepare("INSERT INTO word_tags(word_id,tag_id) VALUES (?,?)");
@@ -45,15 +39,15 @@ function replaceDetails(id: number, input: WordInput): void {
 }
 export const createWord = db.transaction((input: WordInput): Word => {
   const id = Number(db.prepare(`INSERT INTO word_units
-    (term,meaning,note,status,example_sentence,english_translation,english_example_sentence)
-    VALUES (@term,@meaning,@note,@status,@exampleSentence,@englishTranslation,@englishExampleSentence)`).run(input).lastInsertRowid);
+    (term,meaning,note,status,example_sentence,english_translation,english_example_sentence,meaning_space_id)
+    VALUES (@term,@meaning,@note,@status,@exampleSentence,@englishTranslation,@englishExampleSentence,@meaningSpaceId)`).run(input).lastInsertRowid);
   replaceDetails(id,input);
   return getWord(id)!;
 });
 export const updateWord = db.transaction((id: number,input: WordInput): Word | null => {
   if (!db.prepare(`UPDATE word_units SET term=@term,meaning=@meaning,note=@note,status=@status,
     example_sentence=@exampleSentence,english_translation=@englishTranslation,
-    english_example_sentence=@englishExampleSentence WHERE id=@id`).run({ ...input,id }).changes) return null;
+    english_example_sentence=@englishExampleSentence,meaning_space_id=@meaningSpaceId WHERE id=@id`).run({ ...input,id }).changes) return null;
   replaceDetails(id,input);
   return getWord(id)!;
 });
@@ -62,32 +56,12 @@ export function deleteWord(id: number): boolean { return db.prepare("DELETE FROM
 export function listSpaces(): Space[] {
   return (db.prepare("SELECT id,label,note,examples FROM meaning_spaces ORDER BY label COLLATE NOCASE,id").all() as Record<string, unknown>[]).map(row => ({
     id: Number(row.id), label: String(row.label), note: String(row.note), exampleSentences: JSON.parse(String(row.examples)),
-    wordIds: (db.prepare("SELECT word_id AS id FROM space_words WHERE space_id=? ORDER BY position").all(Number(row.id)) as { id: number }[]).map(r => r.id),
+    wordIds: (db.prepare("SELECT id FROM word_units WHERE meaning_space_id=? ORDER BY created_at,id").all(Number(row.id)) as { id: number }[]).map(r => r.id),
   }));
 }
-export const saveSpace = db.transaction((id: number | null,label: string,note: string,examples: string[],wordIds?: number[]): Space | null => {
-  if (wordIds && id !== null) {
-    const current = listSpaces().find(s => s.id === id);
-    if (!current) return null;
-    if (new Set(wordIds).size !== wordIds.length || wordIds.some(wordId => !current.wordIds.includes(wordId)))
-      throw new Error("Ungültige Zuordnungen. Neue Wörter bitte im Worteditor zuweisen.");
-    db.prepare("DELETE FROM space_words WHERE space_id=?").run(id);
-    wordIds.forEach((wordId,position) => db.prepare("INSERT INTO space_words VALUES (?,?,?)").run(id,wordId,position));
-  }
+export const saveSpace = db.transaction((id: number | null,label: string,note: string,examples: string[]): Space | null => {
   if (id === null) id = Number(db.prepare("INSERT INTO meaning_spaces(label,note,examples) VALUES (?,?,?)").run(label,note,JSON.stringify(examples)).lastInsertRowid);
   else if (!db.prepare("UPDATE meaning_spaces SET label=?,note=?,examples=? WHERE id=?").run(label,note,JSON.stringify(examples),id).changes) return null;
   return listSpaces().find(s => s.id === id)!;
 });
 export function deleteSpace(id: number): boolean { return db.prepare("DELETE FROM meaning_spaces WHERE id=?").run(id).changes > 0; }
-export const reorderSpace = db.transaction((id: number,wordIds: number[]): boolean => {
-  const space = listSpaces().find(s => s.id === id);
-  if (!space) return false;
-  if (wordIds.length !== space.wordIds.length || new Set(wordIds).size !== wordIds.length || wordIds.some(wordId => !space.wordIds.includes(wordId)))
-    throw new Error("Die Reihenfolge muss alle zugeordneten Wörter genau einmal enthalten.");
-  db.prepare("DELETE FROM space_words WHERE space_id=?").run(id);
-  wordIds.forEach((wordId,position) => db.prepare("INSERT INTO space_words VALUES (?,?,?)").run(id,wordId,position));
-  return true;
-});
-export function unlinkSpaceWord(spaceId: number,wordId: number): boolean {
-  return db.prepare("DELETE FROM space_words WHERE space_id=? AND word_id=?").run(spaceId,wordId).changes > 0;
-}

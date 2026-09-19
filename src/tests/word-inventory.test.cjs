@@ -11,16 +11,16 @@ const repo = require("../dist/server/repositories/word-repository.js");
 const { db } = require("../dist/server/database/db.js");
 const input = (term,extras = {}) => ({
   term,meaning: "",note: "",status: "draft",exampleSentence: "",
-  englishTranslation: "",englishExampleSentence: "",spaceIds: [],tags: [],...extras,
+  englishTranslation: "",englishExampleSentence: "",meaningSpaceId: null,tags: [],...extras,
 });
 
 test("word schema stores one German example and one English translation pair directly",() => {
   const columns = db.prepare("PRAGMA table_info(word_units)").all().map(column => column.name);
   assert.deepEqual(columns,[
     "id","term","meaning","note","status","example_sentence",
-    "english_translation","english_example_sentence","created_at",
+    "english_translation","english_example_sentence","meaning_space_id","created_at",
   ]);
-  for (const table of ["unit_examples","translations","words","similar_words","example_sentences"]) {
+  for (const table of ["unit_examples","translations","space_words","words","similar_words","example_sentences"]) {
     assert.equal(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table),undefined);
   }
 
@@ -41,27 +41,28 @@ test("word schema stores one German example and one English translation pair dir
   });
 });
 
-test("words keep status, tags and independently ordered meaning-space memberships",() => {
+test("a word stores at most one meaning space and replacing it overwrites the direct foreign key",() => {
   db.prepare("INSERT INTO tags(name) VALUES (?)").run("Adjektiv");
   const a = repo.saveSpace(null,"Aufrichtigkeit","",[]);
   const b = repo.saveSpace(null,"Korrektheit","",[]);
-  const first = repo.createWord(input("falsch",{ meaning: "unaufrichtig",spaceIds: [a.id,b.id],tags: ["Adjektiv"] }));
-  const second = repo.createWord(input("falsch",{ meaning: "nicht korrekt",spaceIds: [a.id,b.id] }));
+  const first = repo.createWord(input("falsch",{ meaning: "unaufrichtig",meaningSpaceId: a.id,tags: ["Adjektiv"] }));
+  const second = repo.createWord(input("falsch",{ meaning: "nicht korrekt",meaningSpaceId: a.id }));
   assert.deepEqual(first.tags,["Adjektiv"]);
-  repo.reorderSpace(a.id,[second.id,first.id]);
-  assert.deepEqual(repo.listSpaces().find(space => space.id === a.id).wordIds,[second.id,first.id]);
-  assert.deepEqual(repo.listSpaces().find(space => space.id === b.id).wordIds,[first.id,second.id]);
+  assert.deepEqual(repo.listSpaces().find(space => space.id === a.id).wordIds,[first.id,second.id]);
   const updated = repo.updateWord(first.id,input("falsch",{
-    status: "ready",meaning: "unaufrichtig",spaceIds: [a.id,b.id],
+    status: "ready",meaning: "unaufrichtig",meaningSpaceId: b.id,
     exampleSentence: "Das war falsch.",englishTranslation: "wrong",
     englishExampleSentence: "That was wrong.",tags: ["Adjektiv"],
   }));
   assert.equal(updated.status,"ready");
   assert.equal(updated.englishTranslation,"wrong");
-  assert.throws(() => repo.updateWord(first.id,input("falsch",{ spaceIds: [999999] })));
+  assert.equal(updated.meaningSpaceId,b.id);
+  assert.deepEqual(repo.listSpaces().find(space => space.id === a.id).wordIds,[second.id]);
+  assert.deepEqual(repo.listSpaces().find(space => space.id === b.id).wordIds,[first.id]);
+  assert.throws(() => repo.updateWord(first.id,input("falsch",{ meaningSpaceId: 999999 })));
   assert.equal(repo.getWord(first.id).status,"ready");
-  repo.unlinkSpaceWord(a.id,first.id);
-  assert.deepEqual(repo.getWord(first.id).spaceIds,[b.id]);
+  repo.deleteSpace(b.id);
+  assert.equal(repo.getWord(first.id).meaningSpaceId,null);
 });
 
 test("HTTP validates and persists the simplified word shape alongside other content",async () => {
@@ -82,13 +83,15 @@ test("HTTP validates and persists the simplified word shape alongside other cont
   }
   try {
     await request("/api/tags","POST",{ name: "Test" });
+    const space = await request("/api/spaces","POST",{ label: "Tempo" });
     const created = await request("/api/words","POST",{
       term: "schnell",status: "draft",meaning: "mit hohem Tempo",exampleSentence: "Er läuft schnell.",
-      englishTranslation: "fast",englishExampleSentence: "He runs fast.",tags: ["Test"],
+      englishTranslation: "fast",englishExampleSentence: "He runs fast.",meaningSpaceId: space.data.id,tags: ["Test"],
     });
     assert.equal(created.status,201);
     assert.equal(created.data.englishTranslation,"fast");
     assert.equal(created.data.exampleSentence,"Er läuft schnell.");
+    assert.equal(created.data.meaningSpaceId,space.data.id);
     assert.deepEqual(created.data.tags,["Test"]);
     assert.equal("language" in created.data,false);
     assert.equal("translations" in created.data,false);

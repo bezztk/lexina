@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import {
   WORD_STATUSES, createWord, deleteWord, listWords, updateWord,
-  listSpaces, saveSpace, deleteSpace, reorderSpace, unlinkSpaceWord,
+  listSpaces, saveSpace, deleteSpace,
   type WordInput, type WordStatus,
 } from "../repositories/word-repository.js";
 export const wordsRouter = Router();
@@ -22,15 +22,14 @@ export function parseInput(body: unknown): WordInput | null {
   const data = body as Record<string, unknown>;
   const term = text(data.term);
   const status = data.status ?? "draft";
-  const spaceIds = data.spaceIds ?? [];
+  const meaningSpaceId = data.meaningSpaceId == null || data.meaningSpaceId === "" ? null : id(data.meaningSpaceId);
   const tags = textList(data.tags);
-  if (!term || !WORD_STATUSES.includes(status as WordStatus) || !Array.isArray(spaceIds)
-    || spaceIds.some(v => id(v) === null || typeof v !== "number")
-    || new Set(spaceIds).size !== spaceIds.length || !tags) return null;
+  if (!term || !WORD_STATUSES.includes(status as WordStatus)
+    || (data.meaningSpaceId != null && data.meaningSpaceId !== "" && (meaningSpaceId === null || typeof data.meaningSpaceId !== "number")) || !tags) return null;
   return {
     term,status: status as WordStatus,meaning: text(data.meaning),note: text(data.note),
     exampleSentence: text(data.exampleSentence),englishTranslation: text(data.englishTranslation),
-    englishExampleSentence: text(data.englishExampleSentence),spaceIds,tags,
+    englishExampleSentence: text(data.englishExampleSentence),meaningSpaceId,tags,
   };
 }
 // Transactions in the repository roll back invalid relations; present readable errors.
@@ -61,26 +60,12 @@ for (const method of ["post", "put"] as const) {
     const spaceId = method === "post" ? null : id(request.params.id);
     const label = text(request.body?.label);
     const examples = textList(request.body?.exampleSentences);
-    const wordIds = request.body?.wordIds;
-    if (wordIds !== undefined && (!Array.isArray(wordIds) || wordIds.some(v => typeof v !== "number" || id(v) === null)))
-      return response.status(400).json({ error: "Ungültige Zuordnungen." });
     if (!label || !examples || (method === "put" && spaceId === null)) return response.status(400).json({ error: "Bezeichnung oder Beispiele sind ungültig." });
-    const space = saveSpace(spaceId,label,text(request.body?.note),examples,wordIds);
+    const space = saveSpace(spaceId,label,text(request.body?.note),examples);
     return space ? response.status(method === "post" ? 201 : 200).json(space) : response.status(404).json({ error: "Bedeutungsraum nicht gefunden." });
   }));
 }
 spacesRouter.delete("/:id", (request,response) => {
   const spaceId = id(request.params.id);
   return spaceId !== null && deleteSpace(spaceId) ? response.status(204).end() : response.status(404).json({ error: "Bedeutungsraum nicht gefunden." });
-});
-spacesRouter.put("/:id/order", safe((request,response) => {
-  const spaceId = id(request.params.id);
-  const wordIds = request.body?.wordIds;
-  if (spaceId === null || !Array.isArray(wordIds) || wordIds.some(v => typeof v !== "number" || id(v) === null))
-    return response.status(400).json({ error: "Ungültige Reihenfolge." });
-  return reorderSpace(spaceId,wordIds) ? response.status(204).end() : response.status(404).json({ error: "Bedeutungsraum nicht gefunden." });
-}));
-spacesRouter.delete("/:id/words/:wordId", (request,response) => {
-  const spaceId = id(request.params.id), wordId = id(request.params.wordId);
-  return spaceId !== null && wordId !== null && unlinkSpaceWord(spaceId,wordId) ? response.status(204).end() : response.status(404).json({ error: "Zuordnung nicht gefunden." });
 });

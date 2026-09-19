@@ -189,6 +189,14 @@ dialog::backdrop { background: rgba(29, 35, 45, 0.52); }
   overflow-y: auto;
 }
 
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.compact-dialog { width: min(430px, calc(100% - 2rem)); }
+
 .source-note { margin: 0; color: #707987; font-size: 0.75rem; }
 .source-note a { color: inherit; }
 
@@ -673,12 +681,6 @@ blockquote {
 }
 
 /* Word inventory: compact cards and controls that also work with touch. */
-.field-pair, .inline-create {
-  display: flex;
-  align-items: end;
-  gap: 0.65rem;
-}
-.field-pair label, .inline-create label { min-width: 0; }
 .word-search-wrap { width: min(100%, 760px); margin: 0 0 1.2rem auto; }
 #words-view > section { margin-top: 1.4rem; }
 #words-view > section > h2 { font-size: 1rem; margin: 0 0 0.65rem; }
@@ -705,23 +707,15 @@ blockquote {
 .space-summary-words small { font-weight: normal; color: #707987; font-size: 0.7rem; }
 .space-card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: end; }
 .space-card-actions > button:first-child { font-size: 0.75rem; }
-.space-options { max-height: 12rem; overflow: auto; display: grid; gap: 0.3rem; margin: 0.6rem 0; }
-.space-choice { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
-.space-choice input { width: auto; margin: 0; }
-.field-pair > label { flex: 1; }
+.space-picker-options { max-height: 16rem; overflow-y: auto; display: grid; gap: 0.35rem; }
+.space-picker-option { display: flex; width: 100%; justify-content: space-between; text-align: left; }
+.space-picker-option.selected { border-color: #315bd6; background: #edf1ff; color: #2448af; }
 .language-section { display: grid; gap: 0.65rem; padding: 0.75rem; border: 1px solid #d8dce2; background: #f8f9fa; }
 .editor-error { background: #fff1f1; color: #8e252b; padding: 0.65rem; border-left: 3px solid #aa2f35; }
 .editor-error[hidden] { display: none; }
 .legacy-details { font-size: 0.72rem; white-space: pre-wrap; overflow-wrap: anywhere; }
-.space-order-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid #d8dce2; }
-.space-order-row > div { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: end; }
-.space-order-row button { min-width: 2.2rem; min-height: 2.2rem; font-size: 0.76rem; }
 button:disabled { opacity: 0.45; cursor: default; }
 @media (max-width: 640px) {
-  .inline-create { flex-wrap: wrap; }
-  .inline-create label { flex-basis: 100%; }
   .meaning-space-card { flex-direction: column; }
   .meaning-space-card .word-summary { flex-direction: column; gap: 0.3rem; }
-  .space-order-row { align-items: start; flex-direction: column; }
-  .space-order-row > div { justify-content: start; }
 }

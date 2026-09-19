@@ -31,33 +31,39 @@
         </div>
         <section class="draft-section" aria-labelledby="draft-heading"><h2 id="draft-heading">Entwürfe <span id="draft-count"></span></h2><p class="section-hint">Schnell gesammelt, später ausarbeiten. Klicke auf ein Wort zum Bearbeiten.</p><div id="draft-list" class="list"></div></section>
         <section aria-labelledby="inventory-heading"><h2 id="inventory-heading">Weitere Wörter</h2><div id="word-list" class="list"></div></section>
-        <section aria-labelledby="spaces-heading"><h2 id="spaces-heading">Bedeutungsräume</h2><p class="section-hint">Deine persönliche Reihenfolge gilt für jeden Raum einzeln.</p><div id="space-list" class="list"></div></section>
+        <section aria-labelledby="spaces-heading"><h2 id="spaces-heading">Bedeutungsräume</h2><div id="space-list" class="list"></div></section>
       </section>
 
       <dialog id="word-dialog" aria-labelledby="word-dialog-title">
         <form id="word-form" class="modal-form">
-          <header class="modal-header"><h2 id="word-dialog-title">Wort bearbeiten</h2><button type="button" class="icon-button close-button" data-action="close-word" aria-label="Schließen">×</button></header>
+          <header class="modal-header"><h2 id="word-dialog-title">Wort bearbeiten</h2><div class="modal-header-actions"><button type="button" data-action="choose-word-space">Bedeutung hinzufügen</button><button type="button" class="icon-button close-button" data-action="close-word" aria-label="Schließen">×</button></div></header>
           <div class="modal-body">
             <input type="hidden" name="id" />
             <label>Wort<input name="term" required /></label>
             <label>Status<select name="status"><option value="draft">Entwurf</option><option value="ready">Bereit</option><option value="learning">Im Lernen</option></select></label>
             <fieldset><legend>Tags</legend><div id="word-tags" class="tag-options"></div></fieldset>
-            <label>Konkrete Bedeutung<textarea name="meaning" rows="2"></textarea></label>
-            <label>Deutscher Beispielsatz<textarea name="exampleSentence" rows="2"></textarea></label>
+            <label>Konkrete Bedeutung<input name="meaning" /></label>
+            <label>Deutscher Beispielsatz<input name="exampleSentence" /></label>
             <fieldset class="language-section"><legend>Englisch</legend>
               <label>Englische Übersetzung<input name="englishTranslation" /></label>
-              <label>Englischer Beispielsatz<textarea name="englishExampleSentence" rows="2"></textarea></label>
+              <label>Englischer Beispielsatz<input name="englishExampleSentence" /></label>
             </fieldset>
-            <label>Notiz<textarea name="note" rows="3"></textarea></label>
-            <fieldset><legend>Bedeutungsräume</legend>
-              <label>Vorhandene Räume suchen<input id="space-search" type="search" placeholder="Bezeichnung suchen" /></label>
-              <div id="word-space-options" class="space-options"></div>
-              <div class="inline-create"><label>Neuen Raum erstellen<input id="inline-space-label" placeholder="Bezeichnung" /></label><button type="button" data-action="inline-space">Anlegen und zuordnen</button></div>
-            </fieldset>
+            <label>Notiz<input name="note" /></label>
             <p id="word-error" class="editor-error" aria-live="polite" hidden></p>
           </div>
           <footer class="form-actions modal-footer"><button type="button" data-action="close-word">Abbrechen</button><button class="primary">Speichern</button></footer>
         </form>
+      </dialog>
+
+      <dialog id="word-space-dialog" class="compact-dialog" aria-labelledby="word-space-dialog-title">
+        <div class="modal-form">
+          <header class="modal-header"><h2 id="word-space-dialog-title">Bedeutungsraum auswählen</h2><button type="button" class="icon-button close-button" data-action="close-word-space" aria-label="Schließen">×</button></header>
+          <div class="modal-body">
+            <label>Bedeutungsraum suchen<input id="word-space-search" type="search" placeholder="Bezeichnung suchen" /></label>
+            <div id="word-space-options" class="space-picker-options"></div>
+          </div>
+          <footer class="form-actions modal-footer"><button type="button" data-action="clear-word-space">Zuordnung entfernen</button><button type="button" data-action="close-word-space">Fertig</button></footer>
+        </div>
       </dialog>
 
       <dialog id="space-dialog" aria-labelledby="space-dialog-title">
@@ -68,8 +74,6 @@
             <label>Bezeichnung<input name="label" required /></label>
             <label>Notiz<textarea name="note" rows="3"></textarea></label>
             <label>Gemeinsame Beispiele (ein Satz pro Zeile)<textarea name="examples" rows="4"></textarea></label>
-            <p class="section-hint">Wörter im Worteditor zuordnen. Hier die Reihenfolge ändern oder eine Zuordnung entfernen.</p>
-            <div id="space-word-editor"></div>
             <p id="space-error" class="editor-error" aria-live="polite" hidden></p>
           </div>
           <footer class="form-actions modal-footer"><button type="button" data-action="close-space">Abbrechen</button><button class="primary">Speichern</button></footer>

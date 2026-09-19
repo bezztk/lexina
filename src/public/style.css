@@ -793,6 +793,7 @@ blockquote {
 .vocabulary-training-answer strong { color: #493a2c; font-size: 1.05rem; }
 .vocabulary-training-actions { display: flex; justify-content: flex-end; }
 [data-training-review-actions] { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem; }
+[data-training-review-actions] button.current { border-color: #898b58; background: rgba(125,129,70,0.2); color: #595b31; box-shadow: inset 0 0 0 1px rgba(125,129,70,0.08); }
 .vocabulary-mode-switch { display: flex; width: 100%; padding: 0 1rem; border-bottom: 1px solid #c3b195; }
 .vocabulary-mode-switch[hidden], #vocabulary-import-form[hidden], #vocabulary-entry-form[hidden] { display: none; }
 .vocabulary-mode-switch button { flex: 1; }

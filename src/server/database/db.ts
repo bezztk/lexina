@@ -143,6 +143,7 @@ db.exec(`
     status TEXT NOT NULL DEFAULT 'learning' CHECK(status IN ('learning','consolidating','secure','out')),
     seen_count INTEGER NOT NULL DEFAULT 0,
     last_seen_step INTEGER,
+    last_prompt_index INTEGER,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   );
 
@@ -155,3 +156,4 @@ const vocabularyEntryColumns = (db.prepare("PRAGMA table_info(vocabulary_entries
 if (!vocabularyEntryColumns.includes("status")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN status TEXT NOT NULL DEFAULT 'learning' CHECK(status IN ('learning','consolidating','secure','out'))");
 if (!vocabularyEntryColumns.includes("seen_count")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN seen_count INTEGER NOT NULL DEFAULT 0");
 if (!vocabularyEntryColumns.includes("last_seen_step")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN last_seen_step INTEGER");
+if (!vocabularyEntryColumns.includes("last_prompt_index")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN last_prompt_index INTEGER");

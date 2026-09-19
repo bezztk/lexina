@@ -24,6 +24,7 @@ export interface VocabularyEntry {
   status: VocabularyStatus;
   seenCount: number;
   lastSeenStep: number | null;
+  lastPromptIndex: number | null;
   createdAt: string;
 }
 
@@ -66,7 +67,7 @@ export function listVocabularyEntries(unitId: number): VocabularyEntry[] {
   return db.prepare(`
     SELECT id,unit_id AS unitId,english_term AS englishTerm,
       german_translation AS germanTranslation,german_explanation AS germanExplanation,
-      status,seen_count AS seenCount,last_seen_step AS lastSeenStep,
+      status,seen_count AS seenCount,last_seen_step AS lastSeenStep,last_prompt_index AS lastPromptIndex,
       created_at AS createdAt
     FROM vocabulary_entries WHERE unit_id=? ORDER BY created_at,id
   `).all(unitId) as VocabularyEntry[];
@@ -76,7 +77,7 @@ export function getVocabularyEntry(id: number): VocabularyEntry | null {
   return (db.prepare(`
     SELECT id,unit_id AS unitId,english_term AS englishTerm,
       german_translation AS germanTranslation,german_explanation AS germanExplanation,
-      status,seen_count AS seenCount,last_seen_step AS lastSeenStep,
+      status,seen_count AS seenCount,last_seen_step AS lastSeenStep,last_prompt_index AS lastPromptIndex,
       created_at AS createdAt
     FROM vocabulary_entries WHERE id=?
   `).get(id) as VocabularyEntry | undefined) || null;
@@ -133,8 +134,10 @@ export const selectNextVocabularyEntry = db.transaction((unitId: number): Vocabu
     });
   }
   const nextStep = unit.reviewStep + 1;
+  const promptCount = selected.germanExplanation ? 3 : 2;
+  const promptIndex = selected.lastPromptIndex === null ? 0 : (selected.lastPromptIndex + 1) % promptCount;
   db.prepare("UPDATE vocabulary_units SET review_step=? WHERE id=?").run(nextStep,unitId);
-  db.prepare("UPDATE vocabulary_entries SET seen_count=seen_count+1,last_seen_step=? WHERE id=?").run(nextStep,selected.id);
+  db.prepare("UPDATE vocabulary_entries SET seen_count=seen_count+1,last_seen_step=?,last_prompt_index=? WHERE id=?").run(nextStep,promptIndex,selected.id);
   return getVocabularyEntry(selected.id);
 });
 

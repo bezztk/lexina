@@ -147,7 +147,7 @@ async function loadNextVocabularyTrainingEntry() {
       ["germanTranslation","Deutsch",entry.germanTranslation],
       ...(entry.germanExplanation ? [["germanExplanation","Bedeutung",entry.germanExplanation]] : []),
     ];
-    const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+    const prompt = prompts[entry.lastPromptIndex];
     vocabularyState.trainingPromptKey = prompt[0];
     document.querySelector("#vocabulary-training-prompt-label").textContent = prompt[1];
     document.querySelector("#vocabulary-training-prompt").textContent = prompt[2];
@@ -179,7 +179,13 @@ function revealVocabularyTrainingEntry() {
   answer.innerHTML = values.map(([,label,value]) => `<div><span>${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
   answer.hidden = false;
   document.querySelector("[data-action='reveal-vocabulary']").hidden = true;
-  document.querySelector("[data-training-review-actions]").hidden = false;
+  const reviewActions = document.querySelector("[data-training-review-actions]");
+  reviewActions.hidden = false;
+  reviewActions.querySelectorAll("[data-review-status]").forEach(button => {
+    const active = button.dataset.reviewStatus === entry.status;
+    button.classList.toggle("current",active);
+    button.setAttribute("aria-pressed",String(active));
+  });
 }
 
 async function reviewCurrentVocabulary(status) {

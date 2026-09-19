@@ -43,9 +43,24 @@ test("training selects the highest weighted recency score and persists reviews",
   assert.equal(selected.id,secure.id);
   assert.equal(selected.lastSeenStep,201);
   assert.equal(selected.seenCount,2);
+  assert.equal(selected.lastPromptIndex,0);
   assert.equal(repo.reviewVocabularyEntry(secure.id,"consolidating").status,"consolidating");
   const counts = repo.getVocabularyUnit(unit.id);
   assert.deepEqual([counts.learningCount,counts.consolidatingCount,counts.secureCount,counts.outCount],[1,2,0,1]);
+});
+
+test("training rotates the prompted side for each vocabulary entry",() => {
+  const unit = repo.saveVocabularyUnit(null,"Prompt rotation");
+  const entry = repo.createVocabularyEntry({
+    unitId: unit.id,englishTerm: "reliable",germanTranslation: "zuverlässig",germanExplanation: "verlässlich",
+  });
+  assert.deepEqual([
+    repo.selectNextVocabularyEntry(unit.id).lastPromptIndex,
+    repo.selectNextVocabularyEntry(unit.id).lastPromptIndex,
+    repo.selectNextVocabularyEntry(unit.id).lastPromptIndex,
+    repo.selectNextVocabularyEntry(unit.id).lastPromptIndex,
+  ],[0,1,2,0]);
+  assert.equal(repo.getVocabularyEntry(entry.id).seenCount,4);
 });
 
 test("vocabulary HTTP endpoints validate and persist units and entries",async () => {

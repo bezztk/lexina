@@ -14,7 +14,7 @@
       <a class="brand" href="#words">Lexina</a>
       <nav aria-label="Bereiche">
         <button class="nav-button active" data-view="words">Wörter</button>
-        <button class="nav-button" data-view="quotes">Zitate &amp; Gedichte</button>
+        <button class="nav-button" data-view="quotes">Texte</button>
         <button class="nav-button" data-view="journal">Journal</button>
         <button class="nav-button" data-view="settings">Einstellungen</button>
       </nav>
@@ -92,15 +92,19 @@
 
       <section id="quotes-view" class="view">
         <div class="view-heading">
-          <h1>Zitate &amp; Gedichte</h1>
-          <button class="primary" data-action="new-quote">Eintrag hinzufügen</button>
+          <h1>Texte</h1>
+          <button class="primary" data-action="new-quote">Zitat hinzufügen</button>
+        </div>
+        <div class="text-section-switch word-section-switch" role="tablist" aria-label="Textart">
+          <button class="active" role="tab" aria-selected="true" data-text-type="quote">Zitate</button>
+          <button role="tab" aria-selected="false" data-text-type="poem">Gedichte</button>
         </div>
         <div id="quote-list" class="list"></div>
       </section>
 
       <dialog id="quote-dialog" aria-labelledby="quote-dialog-title">
         <form id="quote-form" class="modal-form">
-          <header class="modal-header"><h2 id="quote-dialog-title">Eintrag hinzufügen</h2><button type="button" class="icon-button close-button" data-action="close-quote" aria-label="Schließen">×</button></header>
+          <header class="modal-header"><h2 id="quote-dialog-title">Zitat hinzufügen</h2><div class="modal-header-actions"><button type="button" class="icon-button danger" data-delete-quote aria-label="Text löschen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button><button type="button" class="icon-button close-button" data-action="close-quote" aria-label="Schließen">×</button></div></header>
           <div class="modal-body">
             <input type="hidden" name="id" />
             <label>Typ<select name="type"><option value="quote">Zitat</option><option value="poem">Gedicht</option></select></label>

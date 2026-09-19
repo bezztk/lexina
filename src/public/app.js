@@ -14,6 +14,7 @@ const journalDialog = document.querySelector("#journal-dialog");
 const journalDate = document.querySelector("#journal-date");
 const tagForm = document.querySelector("#tag-form");
 const tagDialog = document.querySelector("#tag-dialog");
+let selectedTextType = "quote";
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -60,16 +61,20 @@ function empty(text) {
 async function loadQuotes() {
   try {
     [state.quotes] = await Promise.all([api("/api/quotes"), loadTags()]);
-    document.querySelector("#quote-list").innerHTML = state.quotes.length ? state.quotes.map((entry) => `
-      <article class="card text-card hover-card quote-card" tabindex="0">
-        <div class="card-main"><div class="quote-card-header"><p class="type">${entry.type === "quote" ? "Zitat" : "Gedicht"}</p><div class="quote-card-meta">
+    renderQuotes();
+  } catch { notify("Einträge konnten nicht geladen werden."); }
+}
+
+function renderQuotes() {
+  const entries = state.quotes.filter(entry => entry.type === selectedTextType);
+  document.querySelector("#quote-list").innerHTML = entries.length ? entries.map((entry) => `
+      <article class="card text-card quote-card">
+        <div class="card-main"><div class="quote-card-header"><blockquote><button class="quote-content" data-edit-quote="${entry.id}">${escapeHtml(entry.content)}</button></blockquote>
           ${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
-          <div class="card-hover-actions"><button class="icon-button" data-edit-quote="${entry.id}" aria-label="Eintrag bearbeiten">${icons.pencil}</button><button class="icon-button danger" data-delete-quote="${entry.id}" aria-label="Eintrag löschen">${icons.trash}</button></div>
-        </div></div><blockquote>${escapeHtml(entry.content)}</blockquote>
+        </div>
           ${entry.note ? `<p class="note">${escapeHtml(entry.note)}</p>` : ""}
         </div>
-      </article>`).join("") : empty("Noch keine Zitate oder Gedichte gespeichert.");
-  } catch { notify("Einträge konnten nicht geladen werden."); }
+      </article>`).join("") : empty(selectedTextType === "quote" ? "Noch keine Zitate gespeichert." : "Noch keine Gedichte gespeichert.");
 }
 
 async function loadTags() {
@@ -91,12 +96,16 @@ function selectedTags(selector) {
 }
 
 function openQuoteForm(entry) {
-  document.querySelector("#quote-dialog-title").textContent = entry ? "Eintrag bearbeiten" : "Eintrag hinzufügen";
+  const type = entry?.type ?? selectedTextType;
+  document.querySelector("#quote-dialog-title").textContent = (type === "quote" ? "Zitat" : "Gedicht") + (entry ? " bearbeiten" : " hinzufügen");
   quoteForm.elements.id.value = entry?.id ?? "";
-  quoteForm.elements.type.value = entry?.type ?? "quote";
+  quoteForm.elements.type.value = type;
   quoteForm.elements.content.value = entry?.content ?? "";
   quoteForm.elements.note.value = entry?.note ?? "";
   renderTagOptions("#quote-tags",entry?.tags || []);
+  const deleteButton = document.querySelector("#quote-dialog [data-delete-quote]");
+  deleteButton.hidden = !entry;
+  deleteButton.dataset.deleteQuote = entry?.id || "";
   quoteDialog.showModal();
   quoteForm.elements.content.focus();
 }
@@ -204,6 +213,7 @@ document.addEventListener("click", async (event) => {
       try {
         await api(`/api/${endpoint}/${id}`, { method: "DELETE" });
         if (key === "deleteWord" && wordDialog.open) closeWordForm();
+        if (key === "deleteQuote" && quoteDialog.open) closeQuoteForm();
         await reload(); notify("Eintrag gelöscht.");
       }
       catch { notify("Eintrag konnte nicht gelöscht werden."); }
@@ -214,6 +224,15 @@ document.addEventListener("click", async (event) => {
 wordDialog.addEventListener("click", (event) => {
   if (event.target === wordDialog) closeWordForm();
 });
+
+document.querySelectorAll("[data-text-type]").forEach(button => button.addEventListener("click",() => {
+  selectedTextType = button.dataset.textType;
+  document.querySelectorAll("[data-text-type]").forEach(item => {
+    item.classList.toggle("active",item === button); item.setAttribute("aria-selected",String(item === button));
+  });
+  document.querySelector('[data-action="new-quote"]').textContent = selectedTextType === "quote" ? "Zitat hinzufügen" : "Gedicht hinzufügen";
+  renderQuotes();
+}));
 quoteDialog.addEventListener("click", (event) => { if (event.target === quoteDialog) closeQuoteForm(); });
 journalDialog.addEventListener("click", (event) => { if (event.target === journalDialog) closeJournalForm(); });
 tagDialog.addEventListener("click", (event) => { if (event.target === tagDialog) { tagDialog.close(); tagForm.reset(); } });

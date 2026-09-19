@@ -491,9 +491,10 @@ input:focus, textarea:focus, select:focus {
 .text-card { align-items: start; }
 .quote-card { padding-right: 0.8rem; }
 .quote-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.quote-card-meta { display: flex; flex: 0 0 auto; align-items: flex-start; gap: 0.4rem; }
-.quote-card-meta .tags { justify-content: flex-end; }
-.quote-card .card-hover-actions { position: static; flex: 0 0 auto; transform: none; }
+.quote-card-header blockquote { min-width: 0; flex: 1 1 auto; }
+.quote-card-header .tags { flex: 0 0 auto; justify-content: flex-end; margin: 0 0 0 auto; }
+.quote-content { display: block; min-height: 0; padding: 0; border: 0; background: transparent; color: inherit; font-size: inherit; line-height: inherit; text-align: left; white-space: pre-wrap; }
+.quote-content:hover { background: transparent; color: #2448af; text-decoration: underline; text-underline-offset: 0.16em; }
 
 blockquote {
   margin: 0 0 0.55rem;
@@ -715,6 +716,7 @@ blockquote {
 .selected-word-tag[hidden] { display: none; }
 .selected-word-tag > span { padding: 0.35rem 0.55rem; }
 .selected-word-tag button { width: 1.8rem; min-height: 1.9rem; padding: 0; border: 0; border-left: 1px solid #c6d1f6; background: transparent; color: inherit; }
+.text-section-switch { width: fit-content; margin-bottom: 1rem; border-bottom: 1px solid #cfd4dc; }
 .word-section-panel[hidden] { display: none; }
 .grouped-word-list { display: grid; gap: 0.85rem; }
 .meaning-word-group { overflow: hidden; border: 1px solid #cfd4dc; background: rgba(255,255,255,0.72); }
@@ -764,8 +766,7 @@ button:disabled { opacity: 0.45; cursor: default; }
   .word-section-switch button { flex: 1; }
   .word-filters { justify-content: flex-end; flex-wrap: wrap; }
   .word-primary-fields { grid-template-columns: 1fr; }
-  .quote-card-header { flex-direction: column; gap: 0.45rem; }
-  .quote-card-meta { width: 100%; justify-content: space-between; }
+  .quote-card-header { flex-wrap: wrap; gap: 0.45rem; }
   .meaning-group-header, .meaning-card-summary { align-items: start; flex-direction: column; gap: 0.3rem; }
   .meaning-card-links { flex-wrap: wrap; }
   .meaning-group-header > p, .meaning-card-summary p { text-align: left; }

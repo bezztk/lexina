@@ -70,10 +70,12 @@ test("HTTP validates and persists the simplified word shape alongside other cont
   const { wordsRouter,spacesRouter } = require("../dist/server/routes/words.js");
   const { quotesRouter,tagsRouter } = require("../dist/server/routes/quotes.js");
   const { journalRouter } = require("../dist/server/routes/journal.js");
+  const { seedRouter } = require("../dist/server/routes/seed.js");
   const app = express();
   app.use(express.json());
   app.use("/api/words",wordsRouter); app.use("/api/spaces",spacesRouter);
   app.use("/api/quotes",quotesRouter); app.use("/api/tags",tagsRouter); app.use("/api/journal",journalRouter);
+  app.use("/api/seed",seedRouter);
   const server = app.listen(0,"127.0.0.1");
   await new Promise(resolve => server.once("listening",resolve));
   const base = "http://127.0.0.1:" + server.address().port;
@@ -108,6 +110,20 @@ test("HTTP validates and persists the simplified word shape alongside other cont
     assert.equal(quote.status,201);
     const journal = await request("/api/journal","POST",{ content: "Testjournal",entryAt: "2026-09-18T12:00",tags: ["Test"] });
     assert.equal(journal.status,201);
+
+    assert.equal((await request("/api/seed","POST",{ date: "heute" })).status,400);
+    const seeded = await request("/api/seed","POST",{ date: "2026-09-19" });
+    assert.equal(seeded.status,200);
+    assert.ok(seeded.data.tags > 0 && seeded.data.spaces > 0 && seeded.data.words > 0);
+    assert.equal(seeded.data.quotes,5); assert.equal(seeded.data.journalEntries,5);
+    const demoJournal = await request("/api/journal?date=2026-09-19");
+    assert.equal(demoJournal.data.length,5);
+    assert.ok(demoJournal.data.every(entry => entry.tags.length));
+    const demoWords = await request("/api/words");
+    const stroll = demoWords.data.find(word => word.term === "schlendern");
+    assert.ok(stroll.meaningSpaceId && stroll.tags.includes("Natur"));
+    const secondSeed = await request("/api/seed","POST",{ date: "2026-09-19" });
+    assert.deepEqual(secondSeed.data,{ tags: 0,spaces: 0,words: 0,quotes: 0,journalEntries: 0 });
     assert.deepEqual(db.pragma("foreign_key_check"),[]);
   } finally { await new Promise(resolve => server.close(resolve)); }
 });

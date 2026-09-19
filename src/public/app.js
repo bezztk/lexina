@@ -178,6 +178,16 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.action === "close-journal") closeJournalForm();
   if (button.dataset.action === "new-tag") { tagDialog.showModal(); tagForm.elements.name.focus(); }
   if (button.dataset.action === "close-tag") { tagDialog.close(); tagForm.reset(); }
+  if (button.dataset.action === "seed-data") {
+    button.disabled = true;
+    try {
+      const result = await api("/api/seed",{ method: "POST",body: JSON.stringify({ date: localDateTime().slice(0,10) }) });
+      await loadTags();
+      const created = result.tags + result.spaces + result.words + result.quotes + result.journalEntries;
+      notify(created ? "Beispieldaten wurden angelegt." : "Die Beispieldaten sind bereits vorhanden.");
+    } catch { notify("Beispieldaten konnten nicht angelegt werden."); }
+    finally { button.disabled = false; }
+  }
   const word = state.words.find((item) => item.id === Number(button.dataset.editWord));
   if (word) openWordForm(word);
   const quote = state.quotes.find((item) => item.id === Number(button.dataset.editQuote));

@@ -1,9 +1,9 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import {
-  WORD_STATUSES, LANGUAGES, createWord, deleteWord, listWords, updateWord,
-  listSpaces, saveSpace, deleteSpace, reorderSpace, unlinkSpaceWord, adoptTranslation,
-  type WordInput, type TranslationInput, type Language, type WordStatus,
+  WORD_STATUSES, createWord, deleteWord, listWords, updateWord,
+  listSpaces, saveSpace, deleteSpace, reorderSpace, unlinkSpaceWord,
+  type WordInput, type WordStatus,
 } from "../repositories/word-repository.js";
 export const wordsRouter = Router();
 export const spacesRouter = Router();
@@ -21,22 +21,17 @@ export function parseInput(body: unknown): WordInput | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   const data = body as Record<string, unknown>;
   const term = text(data.term);
-  const language = data.language ?? "de";
   const status = data.status ?? "draft";
-  const exampleSentences = textList(data.exampleSentences);
   const spaceIds = data.spaceIds ?? [];
-  const rawTranslations = data.translations ?? [];
   const tags = textList(data.tags);
-  if (!term || !LANGUAGES.includes(language as Language) || !WORD_STATUSES.includes(status as WordStatus)
-    || !exampleSentences || !Array.isArray(spaceIds) || spaceIds.some(v => id(v) === null || typeof v !== "number")
-    || new Set(spaceIds).size !== spaceIds.length || !Array.isArray(rawTranslations) || !tags) return null;
-  const translations: TranslationInput[] = [];
-  for (const t of rawTranslations) {
-    if (!t || typeof t !== "object" || !LANGUAGES.includes(t.language) || !text(t.text)
-      || (t.linkedWordId != null && (id(t.linkedWordId) === null || typeof t.linkedWordId !== "number"))) return null;
-    translations.push({ language: t.language,text: text(t.text),note: text(t.note),linkedWordId: t.linkedWordId ?? null });
-  }
-  return { term,language: language as Language,status: status as WordStatus,meaning: text(data.meaning),note: text(data.note),exampleSentences,spaceIds,translations,tags };
+  if (!term || !WORD_STATUSES.includes(status as WordStatus) || !Array.isArray(spaceIds)
+    || spaceIds.some(v => id(v) === null || typeof v !== "number")
+    || new Set(spaceIds).size !== spaceIds.length || !tags) return null;
+  return {
+    term,status: status as WordStatus,meaning: text(data.meaning),note: text(data.note),
+    exampleSentence: text(data.exampleSentence),englishTranslation: text(data.englishTranslation),
+    englishExampleSentence: text(data.englishExampleSentence),spaceIds,tags,
+  };
 }
 // Transactions in the repository roll back invalid relations; present readable errors.
 const safe = (handler: (request: Request,response: Response) => unknown) => (request: Request,response: Response) => {
@@ -46,7 +41,7 @@ const safe = (handler: (request: Request,response: Response) => unknown) => (req
 wordsRouter.get("/", (_request,response) => response.json(listWords()));
 wordsRouter.post("/", safe((request,response) => {
   const input = parseInput(request.body);
-  if (!input) return response.status(400).json({ error: "Wort, Sprache, Status oder Ergänzungen sind ungültig." });
+  if (!input) return response.status(400).json({ error: "Wort, Status oder Ergänzungen sind ungültig." });
   return response.status(201).json(createWord(input));
 }));
 wordsRouter.put("/:id", safe((request,response) => {
@@ -60,14 +55,6 @@ wordsRouter.delete("/:id", (request,response) => {
   const wordId = id(request.params.id);
   return wordId !== null && deleteWord(wordId) ? response.status(204).end() : response.status(404).json({ error: "Wort nicht gefunden." });
 });
-wordsRouter.post("/:id/translations/:translationId/adopt", safe((request,response) => {
-  const wordId = id(request.params.id);
-  const translationId = id(request.params.translationId);
-  const targetId = request.body?.targetId == null ? null : id(request.body.targetId);
-  if (wordId === null || translationId === null || (request.body?.targetId != null && targetId === null))
-    return response.status(400).json({ error: "Ungültige Worteinheit." });
-  return response.json(adoptTranslation(wordId,translationId,targetId));
-}));
 spacesRouter.get("/", (_request,response) => response.json(listSpaces()));
 for (const method of ["post", "put"] as const) {
   spacesRouter[method](method === "post" ? "/" : "/:id", safe((request,response) => {

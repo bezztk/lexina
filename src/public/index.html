@@ -40,21 +40,20 @@
           <div class="modal-body">
             <input type="hidden" name="id" />
             <label>Wort<input name="term" required /></label>
-            <div class="field-pair">
-              <label>Sprache<select name="language"><option value="de">Deutsch</option><option value="en">Englisch</option><option value="tr">Türkisch</option></select></label>
-              <label>Status<select name="status"><option value="draft">Entwurf</option><option value="ready">Bereit</option><option value="learning">Im Lernen</option></select></label>
-            </div>
+            <label>Status<select name="status"><option value="draft">Entwurf</option><option value="ready">Bereit</option><option value="learning">Im Lernen</option></select></label>
             <fieldset><legend>Tags</legend><div id="word-tags" class="tag-options"></div></fieldset>
             <label>Konkrete Bedeutung<textarea name="meaning" rows="2"></textarea></label>
-            <fieldset class="repeater-field"><legend>Beispielsätze</legend><div id="example-sentences" class="repeater"></div><button type="button" class="add-row" data-add-row="example-sentences">Weiteren Satz hinzufügen</button></fieldset>
+            <label>Deutscher Beispielsatz<textarea name="exampleSentence" rows="2"></textarea></label>
+            <fieldset class="language-section"><legend>Englisch</legend>
+              <label>Englische Übersetzung<input name="englishTranslation" /></label>
+              <label>Englischer Beispielsatz<textarea name="englishExampleSentence" rows="2"></textarea></label>
+            </fieldset>
             <label>Notiz<textarea name="note" rows="3"></textarea></label>
             <fieldset><legend>Bedeutungsräume</legend>
               <label>Vorhandene Räume suchen<input id="space-search" type="search" placeholder="Bezeichnung suchen" /></label>
               <div id="word-space-options" class="space-options"></div>
               <div class="inline-create"><label>Neuen Raum erstellen<input id="inline-space-label" placeholder="Bezeichnung" /></label><button type="button" data-action="inline-space">Anlegen und zuordnen</button></div>
             </fieldset>
-            <fieldset class="repeater-field"><legend>Übersetzungen dieser Bedeutung</legend><div id="translation-list" class="repeater"></div><button type="button" class="add-row" data-action="add-translation">Übersetzung hinzufügen</button></fieldset>
-            <details id="word-legacy" hidden><summary>Bewahrte Originalinformationen</summary><pre class="legacy-details"></pre></details>
             <p id="word-error" class="editor-error" aria-live="polite" hidden></p>
           </div>
           <footer class="form-actions modal-footer"><button type="button" data-action="close-word">Abbrechen</button><button class="primary">Speichern</button></footer>
@@ -71,7 +70,6 @@
             <label>Gemeinsame Beispiele (ein Satz pro Zeile)<textarea name="examples" rows="4"></textarea></label>
             <p class="section-hint">Wörter im Worteditor zuordnen. Hier die Reihenfolge ändern oder eine Zuordnung entfernen.</p>
             <div id="space-word-editor"></div>
-            <details id="space-legacy" hidden><summary>Bewahrte Originalinformationen</summary><pre class="legacy-details"></pre></details>
             <p id="space-error" class="editor-error" aria-live="polite" hidden></p>
           </div>
           <footer class="form-actions modal-footer"><button type="button" data-action="close-space">Abbrechen</button><button class="primary">Speichern</button></footer>

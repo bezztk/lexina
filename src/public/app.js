@@ -178,14 +178,6 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.action === "close-journal") closeJournalForm();
   if (button.dataset.action === "new-tag") { tagDialog.showModal(); tagForm.elements.name.focus(); }
   if (button.dataset.action === "close-tag") { tagDialog.close(); tagForm.reset(); }
-  if (button.dataset.addRow) addRepeaterRow(button.dataset.addRow);
-  if (button.dataset.removeRow) {
-    const containerId = button.dataset.removeRow;
-    const container = document.querySelector(`#${containerId}`);
-    button.closest(".repeat-row").remove();
-    updateRepeaterButtons(container);
-  }
-
   const word = state.words.find((item) => item.id === Number(button.dataset.editWord));
   if (word) openWordForm(word);
   const quote = state.quotes.find((item) => item.id === Number(button.dataset.editQuote));

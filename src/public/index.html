@@ -49,14 +49,16 @@
           <header class="modal-header"><h2 id="word-dialog-title">Wort bearbeiten</h2><div class="modal-header-actions"><button type="button" data-action="choose-word-space">Bedeutung hinzufügen</button><button type="button" class="icon-button danger" data-delete-word aria-label="Wort löschen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button><button type="button" class="icon-button close-button" data-action="close-word" aria-label="Schließen">×</button></div></header>
           <div class="modal-body">
             <input type="hidden" name="id" />
-            <label>Wort<input name="term" required /></label>
-            <label>Status<select name="status"><option value="draft">Entwurf</option><option value="learning">Lernen</option><option value="ready">Abgeschlossen</option></select></label>
+            <div class="word-primary-fields">
+              <label>Wort<input name="term" required /></label>
+              <label>Status<select name="status"><option value="draft">Entwurf</option><option value="learning">Lernen</option><option value="ready">Abgeschlossen</option></select></label>
+            </div>
             <fieldset><legend>Tags</legend><div id="word-tags" class="tag-options"></div></fieldset>
             <label>Konkrete Bedeutung<input name="meaning" /></label>
             <label>Deutscher Beispielsatz<input name="exampleSentence" /></label>
             <fieldset class="language-section"><legend>Englisch</legend>
-              <label>Englische Übersetzung<input name="englishTranslation" /></label>
-              <label>Englischer Beispielsatz<input name="englishExampleSentence" /></label>
+              <label>Übersetzung<input name="englishTranslation" /></label>
+              <label>Beispielsatz<input name="englishExampleSentence" /></label>
             </fieldset>
             <p id="word-error" class="editor-error" aria-live="polite" hidden></p>
           </div>

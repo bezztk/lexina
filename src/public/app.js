@@ -61,12 +61,13 @@ async function loadQuotes() {
   try {
     [state.quotes] = await Promise.all([api("/api/quotes"), loadTags()]);
     document.querySelector("#quote-list").innerHTML = state.quotes.length ? state.quotes.map((entry) => `
-      <article class="card text-card hover-card" tabindex="0">
-        <div class="card-main"><p class="type">${entry.type === "quote" ? "Zitat" : "Gedicht"}</p><blockquote>${escapeHtml(entry.content)}</blockquote>
+      <article class="card text-card hover-card quote-card" tabindex="0">
+        <div class="card-main"><div class="quote-card-header"><p class="type">${entry.type === "quote" ? "Zitat" : "Gedicht"}</p><div class="quote-card-meta">
           ${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+          <div class="card-hover-actions"><button class="icon-button" data-edit-quote="${entry.id}" aria-label="Eintrag bearbeiten">${icons.pencil}</button><button class="icon-button danger" data-delete-quote="${entry.id}" aria-label="Eintrag löschen">${icons.trash}</button></div>
+        </div></div><blockquote>${escapeHtml(entry.content)}</blockquote>
           ${entry.note ? `<p class="note">${escapeHtml(entry.note)}</p>` : ""}
         </div>
-        <div class="card-hover-actions"><button class="icon-button" data-edit-quote="${entry.id}" aria-label="Eintrag bearbeiten">${icons.pencil}</button><button class="icon-button danger" data-delete-quote="${entry.id}" aria-label="Eintrag löschen">${icons.trash}</button></div>
       </article>`).join("") : empty("Noch keine Zitate oder Gedichte gespeichert.");
   } catch { notify("Einträge konnten nicht geladen werden."); }
 }

@@ -86,6 +86,8 @@ main {
   margin-bottom: 1.25rem;
 }
 
+.view-heading > h1 { display: flex; min-height: 2.25rem; align-items: center; line-height: 1; }
+
 h1, h2, p { margin-top: 0; }
 
 h1 {
@@ -216,6 +218,8 @@ dialog::backdrop { background: rgba(29, 35, 45, 0.52); }
   place-items: center;
 }
 
+.icon-button[hidden] { display: none; }
+
 .icon-button svg {
   width: 1rem;
   height: 1rem;
@@ -280,6 +284,15 @@ input, textarea, select {
   border-radius: 2px;
   background: #fff;
   color: #171a20;
+}
+
+select {
+  appearance: none;
+  padding-right: 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23505b6b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 0.65rem auto;
 }
 
 input, select { min-height: 2.25rem; }
@@ -476,6 +489,11 @@ input:focus, textarea:focus, select:focus {
 .compact select { padding: 0.45rem 0.55rem; }
 
 .text-card { align-items: start; }
+.quote-card { padding-right: 0.8rem; }
+.quote-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.quote-card-meta { display: flex; flex: 0 0 auto; align-items: flex-start; gap: 0.4rem; }
+.quote-card-meta .tags { justify-content: flex-end; }
+.quote-card .card-hover-actions { position: static; flex: 0 0 auto; transform: none; }
 
 blockquote {
   margin: 0 0 0.55rem;
@@ -734,6 +752,7 @@ blockquote {
 .space-picker-options { max-height: 16rem; overflow-y: auto; display: grid; gap: 0.35rem; }
 .space-picker-option { display: flex; width: 100%; justify-content: space-between; text-align: left; }
 .space-picker-option.selected { border-color: #315bd6; background: #edf1ff; color: #2448af; }
+.word-primary-fields { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(9rem, 1fr); gap: 0.9rem; }
 .language-section { display: grid; gap: 0.65rem; padding: 0.75rem; border: 1px solid #d8dce2; background: #f8f9fa; }
 .editor-error { background: #fff1f1; color: #8e252b; padding: 0.65rem; border-left: 3px solid #aa2f35; }
 .editor-error[hidden] { display: none; }
@@ -744,6 +763,9 @@ button:disabled { opacity: 0.45; cursor: default; }
   .word-section-switch { display: flex; border-bottom: 1px solid #cfd4dc; }
   .word-section-switch button { flex: 1; }
   .word-filters { justify-content: flex-end; flex-wrap: wrap; }
+  .word-primary-fields { grid-template-columns: 1fr; }
+  .quote-card-header { flex-direction: column; gap: 0.45rem; }
+  .quote-card-meta { width: 100%; justify-content: space-between; }
   .meaning-group-header, .meaning-card-summary { align-items: start; flex-direction: column; gap: 0.3rem; }
   .meaning-card-links { flex-wrap: wrap; }
   .meaning-group-header > p, .meaning-card-summary p { text-align: left; }

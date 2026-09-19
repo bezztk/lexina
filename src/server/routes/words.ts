@@ -27,7 +27,7 @@ export function parseInput(body: unknown): WordInput | null {
   if (!term || !WORD_STATUSES.includes(status as WordStatus)
     || (data.meaningSpaceId != null && data.meaningSpaceId !== "" && (meaningSpaceId === null || typeof data.meaningSpaceId !== "number")) || !tags) return null;
   return {
-    term,status: status as WordStatus,meaning: text(data.meaning),note: text(data.note),
+    term,status: status as WordStatus,meaning: text(data.meaning),
     exampleSentence: text(data.exampleSentence),englishTranslation: text(data.englishTranslation),
     englishExampleSentence: text(data.englishExampleSentence),meaningSpaceId,tags,
   };

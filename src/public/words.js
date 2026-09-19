@@ -17,19 +17,20 @@ async function loadWords() {
 function matchesWord(word) {
   const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();
   const space = state.spaces.find(item => item.id === word.meaningSpaceId);
-  const haystack = [word.term,word.meaning,word.note,word.exampleSentence,word.englishTranslation,word.englishExampleSentence,...word.tags,space?.label || "",space?.explanation || ""].join(" ").toLocaleLowerCase();
+  const haystack = [word.term,word.meaning,word.exampleSentence,word.englishTranslation,word.englishExampleSentence,...word.tags,space?.label || "",space?.explanation || ""].join(" ").toLocaleLowerCase();
   return !query || haystack.includes(query);
 }
 function statusBadge(word) {
   return word.status === "ready" ? "" : '<span class="inventory-status status-' + word.status + '">' + statusNames[word.status] + '</span>';
 }
 function wordCard(word,grouped = false) {
-  const space = state.spaces.find(item => item.id === word.meaningSpaceId);
-  return '<article class="' + (grouped ? 'grouped-word-row' : 'card word-card inventory-card') + '"><div class="card-main"><div class="word-summary"><h3><button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button></h3>' + statusBadge(word) + '</div>' +
-    (word.meaning ? '<p class="word-meaning">' + escapeHtml(word.meaning) + "</p>" : "") +
-    (word.englishTranslation ? '<p class="word-translation">Englisch: ' + escapeHtml(word.englishTranslation) + "</p>" : "") +
-    (word.tags.length ? '<div class="tags">' + word.tags.map(tag => '<span>' + escapeHtml(tag) + '</span>').join("") + '</div>' : '') +
-    (grouped ? "" : '<p class="word-memberships">' + (space ? '<button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + "</button>" : "Ohne Bedeutung") + "</p>") + "</div></article>";
+  const englishContent = [word.englishTranslation,word.englishExampleSentence].filter(Boolean).map(escapeHtml).join(' <span class="word-separator">·</span> ');
+  return '<article class="' + (grouped ? 'grouped-word-row' : 'card word-card inventory-card') + '"><div class="card-main"><div class="word-summary"><div class="word-title-line"><h3><button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button></h3>' +
+    (word.meaning ? '<span class="word-separator">—</span><span class="inline-word-meaning">' + escapeHtml(word.meaning) + '</span>' : '') + '</div>' + statusBadge(word) + '</div>' +
+    '<p class="word-detail-line"><span class="detail-label">Beispiel:</span><span>' + escapeHtml(word.exampleSentence) + '</span></p>' +
+    '<p class="word-detail-line"><span class="detail-label">Englisch:</span><span>' + englishContent + '</span></p>' +
+    (word.tags.length ? '<div class="tags word-card-tags">' + word.tags.map(tag => '<span>' + escapeHtml(tag) + '</span>').join("") + '</div>' : '') +
+    "</div></article>";
 }
 function renderWords() {
   const words = state.words.filter(matchesWord);
@@ -40,9 +41,10 @@ function renderWords() {
     '<article class="meaning-word-group"><header class="meaning-group-header"><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button><p>' + escapeHtml(space.explanation) + '</p></header><div class="meaning-group-words">' + groupWords.map(word => wordCard(word,true)).join("") + "</div></article>"
   ).join("") + unassigned.map(word => wordCard(word)).join("") || empty("Keine Wörter für diese Suche.");
   const spaces = state.spaces.filter(space => !query || [space.label,space.explanation].join(" ").toLocaleLowerCase().includes(query) || space.wordIds.some(id => words.some(word => word.id === id)));
-  document.querySelector("#space-list").innerHTML = spaces.map(space =>
-    '<article class="card meaning-space-card"><div class="card-main"><div class="meaning-card-summary"><h3><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button></h3><p>' + escapeHtml(space.explanation) + '</p></div></div></article>'
-  ).join("") || empty("Keine Bedeutungen für diese Suche.");
+  document.querySelector("#space-list").innerHTML = spaces.map(space => {
+    const assignedWords = space.wordIds.map(id => words.find(word => word.id === id)).filter(Boolean);
+    return '<article class="card meaning-space-card"><div class="card-main"><div class="meaning-card-summary"><div class="meaning-card-links"><h3><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button></h3><div class="meaning-assigned-words">' + assignedWords.map(word => '<button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button>').join('<span aria-hidden="true">·</span>') + '</div></div><p title="' + escapeHtml(space.explanation) + '">' + escapeHtml(space.explanation) + '</p></div></div></article>';
+  }).join("") || empty("Keine Bedeutungen für diese Suche.");
 }
 function renderSpaceOptions() {
   const query = document.querySelector("#word-space-search").value.trim().toLocaleLowerCase();
@@ -61,7 +63,7 @@ function openWordSpacePicker() {
 }
 function openWordForm(word) {
   document.querySelector("#word-dialog-title").textContent = word ? "Wort bearbeiten" : "Wort hinzufügen";
-  for (const key of ["id","term","status","meaning","exampleSentence","englishTranslation","englishExampleSentence","note"])
+  for (const key of ["id","term","status","meaning","exampleSentence","englishTranslation","englishExampleSentence"])
     wordForm.elements[key].value = word?.[key] ?? (key === "status" ? "draft" : "");
   selectedSpaceId = word?.meaningSpaceId ?? null;
   updateWordSpaceAction();

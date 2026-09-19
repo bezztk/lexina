@@ -10,14 +10,14 @@ process.env.LEXINA_DATABASE_PATH = path.join(directory,"inventory.sqlite");
 const repo = require("../dist/server/repositories/word-repository.js");
 const { db } = require("../dist/server/database/db.js");
 const input = (term,extras = {}) => ({
-  term,meaning: "",note: "",status: "draft",exampleSentence: "",
+  term,meaning: "",status: "draft",exampleSentence: "",
   englishTranslation: "",englishExampleSentence: "",meaningSpaceId: null,tags: [],...extras,
 });
 
 test("word schema stores one German example and one English translation pair directly",() => {
   const columns = db.prepare("PRAGMA table_info(word_units)").all().map(column => column.name);
   assert.deepEqual(columns,[
-    "id","term","meaning","note","status","example_sentence",
+    "id","term","meaning","status","example_sentence",
     "english_translation","english_example_sentence","meaning_space_id","created_at",
   ]);
   for (const table of ["unit_examples","translations","space_words","words","similar_words","example_sentences"]) {

@@ -2,13 +2,13 @@ import { db } from "../database/db.js";
 export const WORD_STATUSES = ["draft", "ready", "learning"] as const;
 export type WordStatus = (typeof WORD_STATUSES)[number];
 export interface WordInput {
-  term: string; meaning: string; note: string; status: WordStatus;
+  term: string; meaning: string; status: WordStatus;
   exampleSentence: string; englishTranslation: string; englishExampleSentence: string;
   meaningSpaceId: number | null; tags?: string[];
 }
 export interface Word extends Omit<WordInput, "tags"> { id: number; createdAt: string; tags: string[] }
 export interface Space { id: number; label: string; explanation: string; wordIds: number[] }
-const selectWord = `SELECT id,term,meaning,note,status,example_sentence AS exampleSentence,
+const selectWord = `SELECT id,term,meaning,status,example_sentence AS exampleSentence,
   english_translation AS englishTranslation,english_example_sentence AS englishExampleSentence,
   meaning_space_id AS meaningSpaceId,created_at AS createdAt FROM word_units`;
 
@@ -39,13 +39,13 @@ function replaceDetails(id: number, input: WordInput): void {
 }
 export const createWord = db.transaction((input: WordInput): Word => {
   const id = Number(db.prepare(`INSERT INTO word_units
-    (term,meaning,note,status,example_sentence,english_translation,english_example_sentence,meaning_space_id)
-    VALUES (@term,@meaning,@note,@status,@exampleSentence,@englishTranslation,@englishExampleSentence,@meaningSpaceId)`).run(input).lastInsertRowid);
+    (term,meaning,status,example_sentence,english_translation,english_example_sentence,meaning_space_id)
+    VALUES (@term,@meaning,@status,@exampleSentence,@englishTranslation,@englishExampleSentence,@meaningSpaceId)`).run(input).lastInsertRowid);
   replaceDetails(id,input);
   return getWord(id)!;
 });
 export const updateWord = db.transaction((id: number,input: WordInput): Word | null => {
-  if (!db.prepare(`UPDATE word_units SET term=@term,meaning=@meaning,note=@note,status=@status,
+  if (!db.prepare(`UPDATE word_units SET term=@term,meaning=@meaning,status=@status,
     example_sentence=@exampleSentence,english_translation=@englishTranslation,
     english_example_sentence=@englishExampleSentence,meaning_space_id=@meaningSpaceId WHERE id=@id`).run({ ...input,id }).changes) return null;
   replaceDetails(id,input);

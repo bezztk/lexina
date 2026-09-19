@@ -19,10 +19,14 @@ export const db = new Database(databasePath);
 db.pragma("foreign_keys = ON");
 
 const wordTable = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='word_units'").get();
-const wordColumns = wordTable
+let wordColumns = wordTable
   ? (db.prepare("PRAGMA table_info(word_units)").all() as { name: string }[]).map(column => column.name)
   : [];
-const currentWordColumns = ["id","term","meaning","note","status","example_sentence","english_translation","english_example_sentence","meaning_space_id","created_at"];
+if (wordColumns.includes("note")) {
+  db.exec("ALTER TABLE word_units DROP COLUMN note");
+  wordColumns = (db.prepare("PRAGMA table_info(word_units)").all() as { name: string }[]).map(column => column.name);
+}
+const currentWordColumns = ["id","term","meaning","status","example_sentence","english_translation","english_example_sentence","meaning_space_id","created_at"];
 if (wordTable && (wordColumns.length !== currentWordColumns.length || currentWordColumns.some(column => !wordColumns.includes(column)))) {
   db.exec(`
     DROP TABLE IF EXISTS word_tags;
@@ -64,7 +68,6 @@ db.exec(`
     id INTEGER PRIMARY KEY,
     term TEXT NOT NULL CHECK(length(trim(term)) > 0),
     meaning TEXT NOT NULL DEFAULT '',
-    note TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','ready','learning')),
     example_sentence TEXT NOT NULL DEFAULT '',
     english_translation TEXT NOT NULL DEFAULT '',

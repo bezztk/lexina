@@ -53,6 +53,19 @@ test("vocabulary HTTP endpoints validate and persist units and entries",async ()
     assert.equal(entry.data.unitId,unit.data.id);
     assert.equal((await request("/api/vocabulary-units")).data[0].entryCount,1);
     assert.equal((await request(`/api/vocabulary-entries/${entry.data.id}`,"DELETE")).status,204);
+    const invalidImport = await request(`/api/vocabulary-units/${unit.data.id}/import`,"POST",[
+      { english: "valid",german: "gültig",meaning: "korrekt" },
+      { english: "missing German",german: "" },
+    ]);
+    assert.equal(invalidImport.status,400);
+    assert.deepEqual((await request(`/api/vocabulary-units/${unit.data.id}/entries`)).data,[]);
+    const imported = await request(`/api/vocabulary-units/${unit.data.id}/import`,"POST",[
+      { english: "to achieve",german: "erreichen",meaning: "ein Ziel verwirklichen" },
+      { english: "reliable",german: "zuverlässig",meaning: "verlässlich" },
+    ]);
+    assert.equal(imported.status,201);
+    assert.equal(imported.data.imported,2);
+    assert.equal((await request(`/api/vocabulary-units/${unit.data.id}/entries`)).data.length,2);
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
 

@@ -73,6 +73,15 @@ export function createVocabularyEntry(input: VocabularyEntryInput): VocabularyEn
   return getVocabularyEntry(id)!;
 }
 
+export const importVocabularyEntries = db.transaction((inputs: VocabularyEntryInput[]): VocabularyEntry[] => {
+  const insert = db.prepare(`
+    INSERT INTO vocabulary_entries(unit_id,english_term,german_translation,german_explanation)
+    VALUES (@unitId,@englishTerm,@germanTranslation,@germanExplanation)
+  `);
+  const ids = inputs.map(input => Number(insert.run(input).lastInsertRowid));
+  return ids.map(id => getVocabularyEntry(id)!);
+});
+
 export function updateVocabularyEntry(id: number,input: VocabularyEntryInput): VocabularyEntry | null {
   const result = db.prepare(`
     UPDATE vocabulary_entries SET unit_id=@unitId,english_term=@englishTerm,

@@ -4,6 +4,7 @@ const vocabularyUnitDialog = document.querySelector("#vocabulary-unit-dialog");
 const vocabularyUnitForm = document.querySelector("#vocabulary-unit-form");
 const vocabularyEntryDialog = document.querySelector("#vocabulary-entry-dialog");
 const vocabularyEntryForm = document.querySelector("#vocabulary-entry-form");
+const vocabularyImportForm = document.querySelector("#vocabulary-import-form");
 
 function selectedVocabularyUnit() {
   return vocabularyState.units.find(unit => unit.id === vocabularyState.selectedUnitId) || null;
@@ -72,20 +73,44 @@ function openVocabularyUnitForm(unit) {
 
 function closeVocabularyUnitForm() { vocabularyUnitDialog.close(); vocabularyUnitForm.reset(); }
 
+function setVocabularyMode(mode) {
+  const importing = mode === "import";
+  vocabularyImportForm.hidden = !importing;
+  vocabularyEntryForm.hidden = importing;
+  document.querySelectorAll("[data-vocabulary-mode]").forEach(button => {
+    const active = button.dataset.vocabularyMode === mode;
+    button.classList.toggle("active",active);
+    button.setAttribute("aria-selected",String(active));
+  });
+  document.querySelector("#vocabulary-entry-dialog-title").textContent = importing ? "Vokabeln hinzufügen" : "Vokabel hinzufügen";
+  window.setTimeout(() => (importing ? vocabularyImportForm.elements.json : vocabularyEntryForm.elements.englishTerm).focus());
+}
+
 function openVocabularyEntryForm(entry) {
   vocabularyEntryForm.elements.id.value = entry?.id || "";
   vocabularyEntryForm.elements.englishTerm.value = entry?.englishTerm || "";
   vocabularyEntryForm.elements.germanTranslation.value = entry?.germanTranslation || "";
   vocabularyEntryForm.elements.germanExplanation.value = entry?.germanExplanation || "";
-  document.querySelector("#vocabulary-entry-dialog-title").textContent = entry ? "Vokabel bearbeiten" : "Vokabel hinzufügen";
   const deleteButton = document.querySelector("[data-delete-vocabulary-entry]");
   deleteButton.hidden = !entry;
   deleteButton.dataset.deleteVocabularyEntry = entry?.id || "";
+  document.querySelector("#vocabulary-mode-switch").hidden = Boolean(entry);
+  document.querySelector("#vocabulary-import-error").hidden = true;
+  setVocabularyMode(entry ? "manual" : "import");
+  if (entry) document.querySelector("#vocabulary-entry-dialog-title").textContent = "Vokabel bearbeiten";
   vocabularyEntryDialog.showModal();
-  vocabularyEntryForm.elements.englishTerm.focus();
 }
 
-function closeVocabularyEntryForm() { vocabularyEntryDialog.close(); vocabularyEntryForm.reset(); }
+function closeVocabularyEntryForm() { vocabularyEntryDialog.close(); vocabularyEntryForm.reset(); vocabularyImportForm.reset(); }
+
+function parseVocabularyJson(value) {
+  let json = String(value).trim();
+  json = json.replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/i,"");
+  const start = json.indexOf("[");
+  const end = json.lastIndexOf("]");
+  if (start >= 0 && end > start) json = json.slice(start,end + 1);
+  return JSON.parse(json);
+}
 
 function initVocabularyArea() {
   vocabularyUnitForm.addEventListener("submit",async event => {
@@ -110,6 +135,21 @@ function initVocabularyArea() {
     } catch { notify("Vokabel konnte nicht gespeichert werden."); }
   });
 
+  vocabularyImportForm.addEventListener("submit",async event => {
+    event.preventDefault();
+    const error = document.querySelector("#vocabulary-import-error");
+    error.hidden = true;
+    try {
+      const entries = parseVocabularyJson(vocabularyImportForm.elements.json.value);
+      const result = await api(`/api/vocabulary-units/${vocabularyState.selectedUnitId}/import`,{ method: "POST",body: JSON.stringify(entries) });
+      closeVocabularyEntryForm(); await loadVocabularyUnits();
+      notify(`${result.imported} ${result.imported === 1 ? "Vokabel wurde" : "Vokabeln wurden"} importiert.`);
+    } catch (importError) {
+      error.textContent = importError instanceof SyntaxError ? "Das eingefügte JSON ist nicht gültig." : importError.message;
+      error.hidden = false;
+    }
+  });
+
   document.addEventListener("click",async event => {
     const button = event.target.closest("button");
     if (!button) return;
@@ -119,6 +159,13 @@ function initVocabularyArea() {
     if (button.dataset.action === "close-vocabulary-unit-dialog") closeVocabularyUnitForm();
     if (button.dataset.action === "new-vocabulary-entry") openVocabularyEntryForm();
     if (button.dataset.action === "close-vocabulary-entry") closeVocabularyEntryForm();
+    if (button.dataset.vocabularyMode) setVocabularyMode(button.dataset.vocabularyMode);
+    if (button.dataset.action === "copy-vocabulary-prompt") {
+      const prompt = document.querySelector("#vocabulary-import-prompt");
+      try { await navigator.clipboard.writeText(prompt.value); }
+      catch { prompt.select(); document.execCommand("copy"); }
+      notify("Prompt kopiert.");
+    }
     if (button.dataset.openVocabularyUnit) await openVocabularyUnit(Number(button.dataset.openVocabularyUnit));
     const entry = vocabularyState.entries.find(item => item.id === Number(button.dataset.editVocabularyEntry));
     if (entry) openVocabularyEntryForm(entry);

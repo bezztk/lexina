@@ -142,7 +142,7 @@
         </div>
         <div id="vocabulary-entry-overview" hidden>
           <div class="vocabulary-back-row"><button type="button" class="quiet-button" data-action="close-vocabulary-unit">← Alle Units</button></div>
-          <div class="view-heading"><h1 id="vocabulary-unit-heading">Unit</h1><div class="heading-actions"><button data-action="edit-vocabulary-unit">Unit bearbeiten</button><button class="primary" data-action="new-vocabulary-entry">Vokabel hinzufügen</button></div></div>
+          <div class="view-heading"><h1 id="vocabulary-unit-heading">Unit</h1><div class="heading-actions"><button data-action="edit-vocabulary-unit">Unit bearbeiten</button><button class="primary" data-action="new-vocabulary-entry">Vokabeln hinzufügen</button></div></div>
           <div id="vocabulary-entry-list" class="list vocabulary-entry-list"></div>
         </div>
       </section>
@@ -156,16 +156,31 @@
       </dialog>
 
       <dialog id="vocabulary-entry-dialog" aria-labelledby="vocabulary-entry-dialog-title">
-        <form id="vocabulary-entry-form" class="modal-form">
+        <div class="modal-form">
           <header class="modal-header"><h2 id="vocabulary-entry-dialog-title">Vokabel hinzufügen</h2><div class="modal-header-actions"><button type="button" class="icon-button danger" data-delete-vocabulary-entry aria-label="Vokabel löschen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button><button type="button" class="icon-button close-button" data-action="close-vocabulary-entry" aria-label="Schließen">×</button></div></header>
-          <div class="modal-body">
-            <input type="hidden" name="id" />
-            <label>Englisch<input name="englishTerm" required /></label>
-            <label>Deutsch<input name="germanTranslation" required /></label>
-            <label>Erklärung<input name="germanExplanation" /></label>
+          <div id="vocabulary-mode-switch" class="word-section-switch vocabulary-mode-switch" role="tablist" aria-label="Art der Eingabe">
+            <button type="button" class="active" role="tab" aria-selected="true" data-vocabulary-mode="import">JSON-Import</button>
+            <button type="button" role="tab" aria-selected="false" data-vocabulary-mode="manual">Manuell</button>
           </div>
-          <footer class="form-actions modal-footer"><button type="button" data-action="close-vocabulary-entry">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>
-        </form>
+          <form id="vocabulary-import-form">
+            <div class="modal-body vocabulary-import-body">
+              <div class="prompt-heading"><strong>Prompt für ChatGPT</strong><button type="button" data-action="copy-vocabulary-prompt">Prompt kopieren</button></div>
+              <textarea id="vocabulary-import-prompt" class="prompt-text" rows="7" readonly>Analysiere die angehängten Seiten mit englischen Vokabeln. Erstelle für jede Vokabel einen Eintrag mit dem englischen Wort, der deutschen Übersetzung und der deutschen Bedeutung beziehungsweise Erklärung. Übernimm die Angaben inhaltlich aus der Vorlage und erfinde keine zusätzlichen Vokabeln. Gib ausschließlich ein gültiges JSON-Array in folgendem Format zurück: [{&quot;english&quot;:&quot;…&quot;,&quot;german&quot;:&quot;…&quot;,&quot;meaning&quot;:&quot;…&quot;}]. Verwende keine Markdown-Codeblöcke und keinen erklärenden Text außerhalb des JSON.</textarea>
+              <label>JSON einfügen<textarea name="json" rows="9" placeholder='[{"english":"to achieve","german":"erreichen","meaning":"ein Ziel erfolgreich verwirklichen"}]' required></textarea></label>
+              <p id="vocabulary-import-error" class="editor-error" aria-live="polite" hidden></p>
+            </div>
+            <footer class="form-actions modal-footer"><button type="button" data-action="close-vocabulary-entry">Abbrechen</button><button class="primary" type="submit">Importieren</button></footer>
+          </form>
+          <form id="vocabulary-entry-form" hidden>
+            <div class="modal-body">
+              <input type="hidden" name="id" />
+              <label>Englisch<input name="englishTerm" required /></label>
+              <label>Deutsch<input name="germanTranslation" required /></label>
+              <label>Erklärung<input name="germanExplanation" /></label>
+            </div>
+            <footer class="form-actions modal-footer"><button type="button" data-action="close-vocabulary-entry">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>
+          </form>
+        </div>
       </dialog>
 
       <section id="settings-view" class="view">

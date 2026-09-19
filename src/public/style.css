@@ -775,6 +775,15 @@ blockquote {
 .vocabulary-entry-content strong { color: #626438; font-size: 0.95rem; }
 .vocabulary-entry-content span { color: #493a2c; font-weight: 650; }
 .vocabulary-entry-content small { color: #756550; font-size: 0.8rem; }
+.vocabulary-mode-switch { display: flex; width: 100%; padding: 0 1rem; border-bottom: 1px solid #c3b195; }
+.vocabulary-mode-switch[hidden], #vocabulary-import-form[hidden], #vocabulary-entry-form[hidden] { display: none; }
+.vocabulary-mode-switch button { flex: 1; }
+#vocabulary-import-form, #vocabulary-entry-form { min-height: 0; }
+.vocabulary-import-body { gap: 0.65rem; }
+.prompt-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #685641; }
+.prompt-heading button { min-height: 1.9rem; padding: 0.3rem 0.55rem; font-size: 0.78rem; }
+.prompt-text { height: 7.5rem; min-height: 7.5rem; color: #665440; font-size: 0.78rem; line-height: 1.35; resize: none; }
+#vocabulary-import-form textarea[name="json"] { height: 10rem; min-height: 10rem; overflow-y: auto; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 0.76rem; resize: none; }
 .meaning-card-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .meaning-card-links { display: flex; min-width: 0; flex: 1 1 auto; align-items: baseline; gap: 0.65rem; }
 .meaning-assigned-words { display: flex; min-width: 0; align-items: baseline; gap: 0.35rem; flex-wrap: wrap; }

@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { Request,Response } from "express";
 import {
   createVocabularyEntry,deleteVocabularyEntry,deleteVocabularyUnit,
-  listVocabularyEntries,listVocabularyUnits,saveVocabularyUnit,updateVocabularyEntry,
+  importVocabularyEntries,listVocabularyEntries,listVocabularyUnits,saveVocabularyUnit,updateVocabularyEntry,
   type VocabularyEntryInput,
 } from "../repositories/vocabulary-repository.js";
 
@@ -28,6 +28,22 @@ function entryInput(body: unknown,unitId: number | null): VocabularyEntryInput |
   return { unitId,englishTerm,germanTranslation,germanExplanation: text(data.germanExplanation) };
 }
 
+function importInput(body: unknown,unitId: number | null): { inputs: VocabularyEntryInput[];error: string | null } {
+  if (unitId === null || !Array.isArray(body) || !body.length) return { inputs: [],error: "Das JSON muss mindestens eine Vokabel enthalten." };
+  if (body.length > 1000) return { inputs: [],error: "Pro Import sind höchstens 1000 Vokabeln möglich." };
+  const inputs: VocabularyEntryInput[] = [];
+  for (const [index,item] of body.entries()) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return { inputs: [],error: `Eintrag ${index + 1} ist ungültig.` };
+    const data = item as Record<string,unknown>;
+    const englishTerm = text(data.english);
+    const germanTranslation = text(data.german);
+    if (!englishTerm || !germanTranslation) return { inputs: [],error: `Eintrag ${index + 1} benötigt Englisch und Deutsch.` };
+    if (data.meaning !== undefined && typeof data.meaning !== "string") return { inputs: [],error: `Die Bedeutung in Eintrag ${index + 1} ist ungültig.` };
+    inputs.push({ unitId,englishTerm,germanTranslation,germanExplanation: text(data.meaning) });
+  }
+  return { inputs,error: null };
+}
+
 vocabularyUnitsRouter.get("/",(_request,response) => response.json(listVocabularyUnits()));
 vocabularyUnitsRouter.post("/",safe((request,response) => {
   const label = text(request.body?.label);
@@ -51,6 +67,12 @@ vocabularyUnitsRouter.get("/:id/entries",(request,response) => {
 vocabularyUnitsRouter.post("/:id/entries",safe((request,response) => {
   const input = entryInput(request.body,id(request.params.id));
   return input ? response.status(201).json(createVocabularyEntry(input)) : response.status(400).json({ error: "Englisch und Deutsch sind erforderlich." });
+}));
+vocabularyUnitsRouter.post("/:id/import",safe((request,response) => {
+  const parsed = importInput(request.body,id(request.params.id));
+  if (parsed.error) return response.status(400).json({ error: parsed.error });
+  const entries = importVocabularyEntries(parsed.inputs);
+  return response.status(201).json({ imported: entries.length,entries });
 }));
 
 vocabularyEntriesRouter.put("/:id",safe((request,response) => {

@@ -770,11 +770,29 @@ blockquote {
 .quiet-button { min-height: 0; padding: 0.15rem 0; border: 0; background: transparent; color: #756550; }
 .quiet-button:hover { border: 0; background: transparent; color: #793f28; text-decoration: underline; }
 .vocabulary-entry-card { min-height: 0; padding: 0; }
-.vocabulary-entry-content { display: grid; width: 100%; min-height: 0; grid-template-columns: minmax(9rem,0.8fr) minmax(9rem,0.8fr) minmax(12rem,1.4fr); align-items: baseline; gap: 1rem; padding: 0.65rem 0.8rem; border: 0; background: transparent; text-align: left; }
+.vocabulary-entry-content { display: grid; width: 100%; min-height: 0; grid-template-columns: minmax(9rem,0.8fr) minmax(9rem,0.8fr) minmax(12rem,1.4fr) auto; align-items: baseline; gap: 1rem; padding: 0.65rem 0.8rem; border: 0; background: transparent; text-align: left; }
 .vocabulary-entry-content:hover { border: 0; background: transparent; }
 .vocabulary-entry-content strong { color: #626438; font-size: 0.95rem; }
 .vocabulary-entry-content span { color: #493a2c; font-weight: 650; }
 .vocabulary-entry-content small { color: #756550; font-size: 0.8rem; }
+.vocabulary-status { color: #756550; font-size: 0.72rem; font-style: normal; font-weight: 650; white-space: nowrap; }
+.vocabulary-status-learning, .vocabulary-summary-learning { color: #a05a27; }
+.vocabulary-status-consolidating, .vocabulary-summary-consolidating { color: #77763f; }
+.vocabulary-status-secure, .vocabulary-summary-secure { color: #53705b; }
+.vocabulary-status-out, .vocabulary-summary-out { color: #897c6c; }
+.vocabulary-status-summary { display: flex; flex-wrap: wrap; gap: 0.45rem 1rem; margin: -0.45rem 0 0.85rem; color: #756550; font-size: 0.78rem; }
+.vocabulary-status-summary span { white-space: nowrap; }
+.vocabulary-training-body { min-height: 20rem; align-content: start; }
+.vocabulary-training-body .vocabulary-status-summary { margin: 0 0 0.5rem; }
+.vocabulary-training-card { display: grid; min-height: 15rem; place-content: center; gap: 0.7rem; padding: 1.5rem; border: 1px solid #c3b195; background: rgba(249,242,225,0.68); text-align: center; }
+.vocabulary-training-card > strong { color: #793f28; font-size: clamp(1.6rem,5vw,2.5rem); line-height: 1.15; }
+.vocabulary-training-answer { display: grid; gap: 0.45rem; margin-top: 0.65rem; padding-top: 0.8rem; border-top: 1px solid #c3b195; }
+.vocabulary-training-answer[hidden], .vocabulary-training-card[hidden], .vocabulary-training-empty[hidden], [data-training-review-actions][hidden], .vocabulary-training-actions > button[hidden] { display: none; }
+.vocabulary-training-answer div { display: grid; gap: 0.08rem; }
+.vocabulary-training-answer span { color: #756550; font-size: 0.72rem; text-transform: uppercase; }
+.vocabulary-training-answer strong { color: #493a2c; font-size: 1.05rem; }
+.vocabulary-training-actions { display: flex; justify-content: flex-end; }
+[data-training-review-actions] { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem; }
 .vocabulary-mode-switch { display: flex; width: 100%; padding: 0 1rem; border-bottom: 1px solid #c3b195; }
 .vocabulary-mode-switch[hidden], #vocabulary-import-form[hidden], #vocabulary-entry-form[hidden] { display: none; }
 .vocabulary-mode-switch button { flex: 1; }

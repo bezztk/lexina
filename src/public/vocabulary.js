@@ -1,10 +1,12 @@
-const vocabularyState = { units: [],entries: [],selectedUnitId: null };
+const vocabularyState = { units: [],entries: [],selectedUnitId: null,trainingEntry: null,trainingPromptKey: null };
+const vocabularyStatusNames = { learning: "Lernen",consolidating: "Festigen",secure: "Sicher",out: "Aus Übung" };
 
 const vocabularyUnitDialog = document.querySelector("#vocabulary-unit-dialog");
 const vocabularyUnitForm = document.querySelector("#vocabulary-unit-form");
 const vocabularyEntryDialog = document.querySelector("#vocabulary-entry-dialog");
 const vocabularyEntryForm = document.querySelector("#vocabulary-entry-form");
 const vocabularyImportForm = document.querySelector("#vocabulary-import-form");
+const vocabularyTrainingDialog = document.querySelector("#vocabulary-training-dialog");
 
 function selectedVocabularyUnit() {
   return vocabularyState.units.find(unit => unit.id === vocabularyState.selectedUnitId) || null;
@@ -48,16 +50,31 @@ function closeVocabularyUnit() {
 async function loadVocabularyEntries() {
   try {
     vocabularyState.entries = await api(`/api/vocabulary-units/${vocabularyState.selectedUnitId}/entries`);
-    document.querySelector("#vocabulary-entry-list").innerHTML = vocabularyState.entries.length ? vocabularyState.entries.map(entry => `
+    renderVocabularyEntries();
+  } catch { notify("Vokabeln konnten nicht geladen werden."); }
+}
+
+function renderVocabularySummary() {
+  const counts = { learning: 0,consolidating: 0,secure: 0,out: 0 };
+  vocabularyState.entries.forEach(entry => { counts[entry.status] += 1; });
+  const content = `<span><strong>${vocabularyState.entries.length}</strong> Gesamt</span>` + Object.entries(counts).map(([status,count]) =>
+    `<span class="vocabulary-summary-${status}"><strong>${count}</strong> ${vocabularyStatusNames[status]}</span>`).join("");
+  document.querySelector("#vocabulary-status-summary").innerHTML = content;
+  document.querySelector("#vocabulary-training-summary").innerHTML = content;
+}
+
+function renderVocabularyEntries() {
+  document.querySelector("#vocabulary-entry-list").innerHTML = vocabularyState.entries.length ? vocabularyState.entries.map(entry => `
       <article class="card vocabulary-entry-card">
         <button class="vocabulary-entry-content" data-edit-vocabulary-entry="${entry.id}">
           <strong>${escapeHtml(entry.englishTerm)}</strong>
           <span>${escapeHtml(entry.germanTranslation)}</span>
           ${entry.germanExplanation ? `<small>${escapeHtml(entry.germanExplanation)}</small>` : ""}
+          <em class="vocabulary-status vocabulary-status-${entry.status}">${vocabularyStatusNames[entry.status]}</em>
         </button>
       </article>
     `).join("") : empty("Diese Unit enthält noch keine Vokabeln.");
-  } catch { notify("Vokabeln konnten nicht geladen werden."); }
+  renderVocabularySummary();
 }
 
 function openVocabularyUnitForm(unit) {
@@ -112,6 +129,70 @@ function parseVocabularyJson(value) {
   return JSON.parse(json);
 }
 
+async function loadNextVocabularyTrainingEntry() {
+  try {
+    const entry = await api(`/api/vocabulary-units/${vocabularyState.selectedUnitId}/next`,{ method: "POST" });
+    vocabularyState.trainingEntry = entry;
+    const card = document.querySelector("#vocabulary-training-card");
+    const emptyState = document.querySelector("#vocabulary-training-empty");
+    const revealButton = document.querySelector("[data-action='reveal-vocabulary']");
+    const reviewActions = document.querySelector("[data-training-review-actions]");
+    card.hidden = !entry;
+    emptyState.hidden = Boolean(entry);
+    revealButton.hidden = !entry;
+    reviewActions.hidden = true;
+    if (!entry) return;
+    const prompts = [
+      ["englishTerm","Englisch",entry.englishTerm],
+      ["germanTranslation","Deutsch",entry.germanTranslation],
+      ...(entry.germanExplanation ? [["germanExplanation","Bedeutung",entry.germanExplanation]] : []),
+    ];
+    const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+    vocabularyState.trainingPromptKey = prompt[0];
+    document.querySelector("#vocabulary-training-prompt-label").textContent = prompt[1];
+    document.querySelector("#vocabulary-training-prompt").textContent = prompt[2];
+    document.querySelector("#vocabulary-training-answer").hidden = true;
+  } catch { notify("Die nächste Vokabel konnte nicht geladen werden."); }
+}
+
+async function openVocabularyTraining() {
+  const unit = selectedVocabularyUnit();
+  document.querySelector("#vocabulary-training-title").textContent = `${unit.label} trainieren`;
+  vocabularyTrainingDialog.showModal();
+  await loadNextVocabularyTrainingEntry();
+}
+
+function closeVocabularyTraining() {
+  vocabularyState.trainingEntry = null;
+  vocabularyTrainingDialog.close();
+}
+
+function revealVocabularyTrainingEntry() {
+  const entry = vocabularyState.trainingEntry;
+  if (!entry) return;
+  const values = [
+    ["englishTerm","Englisch",entry.englishTerm],
+    ["germanTranslation","Deutsch",entry.germanTranslation],
+    ["germanExplanation","Bedeutung",entry.germanExplanation],
+  ].filter(([key,,value]) => key !== vocabularyState.trainingPromptKey && value);
+  const answer = document.querySelector("#vocabulary-training-answer");
+  answer.innerHTML = values.map(([,label,value]) => `<div><span>${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
+  answer.hidden = false;
+  document.querySelector("[data-action='reveal-vocabulary']").hidden = true;
+  document.querySelector("[data-training-review-actions]").hidden = false;
+}
+
+async function reviewCurrentVocabulary(status) {
+  const entry = vocabularyState.trainingEntry;
+  if (!entry) return;
+  try {
+    const updated = await api(`/api/vocabulary-entries/${entry.id}/review`,{ method: "POST",body: JSON.stringify({ status }) });
+    vocabularyState.entries = vocabularyState.entries.map(item => item.id === updated.id ? updated : item);
+    renderVocabularyEntries();
+    await loadNextVocabularyTrainingEntry();
+  } catch { notify("Der Lernstatus konnte nicht gespeichert werden."); }
+}
+
 function initVocabularyArea() {
   vocabularyUnitForm.addEventListener("submit",async event => {
     event.preventDefault();
@@ -159,6 +240,10 @@ function initVocabularyArea() {
     if (button.dataset.action === "close-vocabulary-unit-dialog") closeVocabularyUnitForm();
     if (button.dataset.action === "new-vocabulary-entry") openVocabularyEntryForm();
     if (button.dataset.action === "close-vocabulary-entry") closeVocabularyEntryForm();
+    if (button.dataset.action === "start-vocabulary-training") await openVocabularyTraining();
+    if (button.dataset.action === "close-vocabulary-training") closeVocabularyTraining();
+    if (button.dataset.action === "reveal-vocabulary") revealVocabularyTrainingEntry();
+    if (button.dataset.reviewStatus) await reviewCurrentVocabulary(button.dataset.reviewStatus);
     if (button.dataset.vocabularyMode) setVocabularyMode(button.dataset.vocabularyMode);
     if (button.dataset.action === "copy-vocabulary-prompt") {
       const prompt = document.querySelector("#vocabulary-import-prompt");
@@ -181,4 +266,5 @@ function initVocabularyArea() {
 
   vocabularyUnitDialog.addEventListener("click",event => { if (event.target === vocabularyUnitDialog) closeVocabularyUnitForm(); });
   vocabularyEntryDialog.addEventListener("click",event => { if (event.target === vocabularyEntryDialog) closeVocabularyEntryForm(); });
+  vocabularyTrainingDialog.addEventListener("click",event => { if (event.target === vocabularyTrainingDialog) closeVocabularyTraining(); });
 }

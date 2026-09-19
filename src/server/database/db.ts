@@ -130,6 +130,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS vocabulary_units (
     id INTEGER PRIMARY KEY,
     label TEXT NOT NULL CHECK(length(trim(label)) > 0),
+    review_step INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   );
 
@@ -139,8 +140,18 @@ db.exec(`
     english_term TEXT NOT NULL CHECK(length(trim(english_term)) > 0),
     german_translation TEXT NOT NULL CHECK(length(trim(german_translation)) > 0),
     german_explanation TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'learning' CHECK(status IN ('learning','consolidating','secure','out')),
+    seen_count INTEGER NOT NULL DEFAULT 0,
+    last_seen_step INTEGER,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   );
 
   CREATE INDEX IF NOT EXISTS idx_vocabulary_entries_unit ON vocabulary_entries(unit_id,created_at,id);
 `);
+
+const vocabularyUnitColumns = (db.prepare("PRAGMA table_info(vocabulary_units)").all() as { name: string }[]).map(column => column.name);
+if (!vocabularyUnitColumns.includes("review_step")) db.exec("ALTER TABLE vocabulary_units ADD COLUMN review_step INTEGER NOT NULL DEFAULT 0");
+const vocabularyEntryColumns = (db.prepare("PRAGMA table_info(vocabulary_entries)").all() as { name: string }[]).map(column => column.name);
+if (!vocabularyEntryColumns.includes("status")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN status TEXT NOT NULL DEFAULT 'learning' CHECK(status IN ('learning','consolidating','secure','out'))");
+if (!vocabularyEntryColumns.includes("seen_count")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN seen_count INTEGER NOT NULL DEFAULT 0");
+if (!vocabularyEntryColumns.includes("last_seen_step")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN last_seen_step INTEGER");

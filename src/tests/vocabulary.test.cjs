@@ -27,6 +27,27 @@ test("units contain separate vocabulary entries and delete them through the rela
   assert.deepEqual(db.pragma("foreign_key_check"),[]);
 });
 
+test("training selects the highest weighted recency score and persists reviews",() => {
+  const unit = repo.saveVocabularyUnit(null,"Training");
+  const makeEntry = englishTerm => repo.createVocabularyEntry({ unitId: unit.id,englishTerm,germanTranslation: englishTerm,germanExplanation: "" });
+  const learning = makeEntry("learning");
+  const consolidating = makeEntry("consolidating");
+  const secure = makeEntry("secure");
+  const out = makeEntry("out");
+  db.prepare("UPDATE vocabulary_units SET review_step=200 WHERE id=?").run(unit.id);
+  db.prepare("UPDATE vocabulary_entries SET status='learning',last_seen_step=180,seen_count=1 WHERE id=?").run(learning.id);
+  db.prepare("UPDATE vocabulary_entries SET status='consolidating',last_seen_step=160,seen_count=1 WHERE id=?").run(consolidating.id);
+  db.prepare("UPDATE vocabulary_entries SET status='secure',last_seen_step=100,seen_count=1 WHERE id=?").run(secure.id);
+  db.prepare("UPDATE vocabulary_entries SET status='out',last_seen_step=1,seen_count=1 WHERE id=?").run(out.id);
+  const selected = repo.selectNextVocabularyEntry(unit.id);
+  assert.equal(selected.id,secure.id);
+  assert.equal(selected.lastSeenStep,201);
+  assert.equal(selected.seenCount,2);
+  assert.equal(repo.reviewVocabularyEntry(secure.id,"consolidating").status,"consolidating");
+  const counts = repo.getVocabularyUnit(unit.id);
+  assert.deepEqual([counts.learningCount,counts.consolidatingCount,counts.secureCount,counts.outCount],[1,2,0,1]);
+});
+
 test("vocabulary HTTP endpoints validate and persist units and entries",async () => {
   const express = require("express");
   const { vocabularyUnitsRouter,vocabularyEntriesRouter } = require("../dist/server/routes/vocabulary.js");
@@ -51,7 +72,7 @@ test("vocabulary HTTP endpoints validate and persist units and entries",async ()
     });
     assert.equal(entry.status,201);
     assert.equal(entry.data.unitId,unit.data.id);
-    assert.equal((await request("/api/vocabulary-units")).data[0].entryCount,1);
+    assert.equal((await request("/api/vocabulary-units")).data.find(item => item.id === unit.data.id).entryCount,1);
     assert.equal((await request(`/api/vocabulary-entries/${entry.data.id}`,"DELETE")).status,204);
     const invalidImport = await request(`/api/vocabulary-units/${unit.data.id}/import`,"POST",[
       { english: "valid",german: "gültig",meaning: "korrekt" },

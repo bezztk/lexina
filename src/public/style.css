@@ -530,7 +530,9 @@ blockquote {
   pointer-events: auto;
 }
 
-.date-picker { min-width: 10rem; }
+.date-picker { display: block; min-width: 10rem; }
+.journal-heading-actions > * { height: 2.25rem; min-height: 2.25rem; }
+.journal-heading-actions .date-picker input { height: 100%; }
 
 .heading-actions {
   display: flex;
@@ -683,9 +685,18 @@ blockquote {
 /* Word inventory: compact cards and controls that also work with touch. */
 .word-search-wrap { width: min(100%, 560px); margin: 0 0 1.2rem auto; }
 #words-view > section { margin-top: 1rem; }
-.word-section-switch { display: inline-flex; border-bottom: 1px solid #cfd4dc; }
+.word-inventory-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #cfd4dc; }
+.word-section-switch { display: inline-flex; }
 .word-section-switch button { min-width: 7rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #69727f; }
 .word-section-switch button.active { border-color: #315bd6; color: #2448af; font-weight: 650; }
+.word-filters { display: flex; align-items: center; gap: 0.45rem; padding-bottom: 0.35rem; }
+.word-filter-select { display: block; min-width: 8.5rem; }
+.word-filter-select[hidden] { display: none; }
+.word-filter-select select { min-height: 2rem; padding: 0.35rem 1.8rem 0.35rem 0.55rem; font-size: 0.8rem; }
+.selected-word-tag { display: flex; min-height: 2rem; align-items: center; border: 1px solid #315bd6; background: #edf1ff; color: #2448af; font-size: 0.8rem; }
+.selected-word-tag[hidden] { display: none; }
+.selected-word-tag > span { padding: 0.35rem 0.55rem; }
+.selected-word-tag button { width: 1.8rem; min-height: 1.9rem; padding: 0; border: 0; border-left: 1px solid #c6d1f6; background: transparent; color: inherit; }
 .word-section-panel[hidden] { display: none; }
 .grouped-word-list { display: grid; gap: 0.85rem; }
 .meaning-word-group { overflow: hidden; border: 1px solid #cfd4dc; background: rgba(255,255,255,0.72); }
@@ -729,8 +740,10 @@ blockquote {
 .legacy-details { font-size: 0.72rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 button:disabled { opacity: 0.45; cursor: default; }
 @media (max-width: 640px) {
-  .word-section-switch { display: flex; }
+  .word-inventory-toolbar { align-items: stretch; flex-direction: column; border-bottom: 0; }
+  .word-section-switch { display: flex; border-bottom: 1px solid #cfd4dc; }
   .word-section-switch button { flex: 1; }
+  .word-filters { justify-content: flex-end; flex-wrap: wrap; }
   .meaning-group-header, .meaning-card-summary { align-items: start; flex-direction: column; gap: 0.3rem; }
   .meaning-card-links { flex-wrap: wrap; }
   .meaning-group-header > p, .meaning-card-summary p { text-align: left; }

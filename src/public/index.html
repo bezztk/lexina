@@ -29,9 +29,16 @@
           <label class="visually-hidden" for="word-search">Wörter durchsuchen</label>
           <input id="word-search" type="search" placeholder="Wort oder Bedeutung suchen" />
         </div>
-        <div class="word-section-switch" role="tablist" aria-label="Wörterbereich">
-          <button class="active" role="tab" aria-selected="true" data-word-section="inventory">Wörter</button>
-          <button role="tab" aria-selected="false" data-word-section="meanings">Bedeutungen</button>
+        <div class="word-inventory-toolbar">
+          <div class="word-section-switch" role="tablist" aria-label="Wörterbereich">
+            <button class="active" role="tab" aria-selected="true" data-word-section="inventory">Wörter</button>
+            <button role="tab" aria-selected="false" data-word-section="meanings">Bedeutungen</button>
+          </div>
+          <div class="word-filters" aria-label="Wörter filtern">
+            <label class="word-filter-select"><span class="visually-hidden">Status</span><select id="word-status-filter" aria-label="Nach Status filtern"><option value="">Alle Status</option><option value="draft">Entwurf</option><option value="learning">Lernen</option><option value="ready">Abgeschlossen</option></select></label>
+            <label class="word-filter-select" id="word-tag-filter-wrap"><span class="visually-hidden">Tag</span><select id="word-tag-filter" aria-label="Nach Tag filtern"><option value="">Tag auswählen</option></select></label>
+            <div id="word-tag-selection" class="selected-word-tag" hidden><span></span><button type="button" data-clear-word-tag aria-label="Tagfilter entfernen">×</button></div>
+          </div>
         </div>
         <section id="word-overview" class="word-section-panel" aria-label="Wörter"><div id="word-list" class="grouped-word-list"></div></section>
         <section id="meaning-overview" class="word-section-panel" aria-label="Bedeutungen" hidden><div id="space-list" class="list"></div></section>
@@ -106,7 +113,7 @@
       <section id="journal-view" class="view">
         <div class="view-heading">
           <h1>Journal</h1>
-          <div class="heading-actions"><label class="date-picker">Tag<input id="journal-date" type="date" /></label><button class="primary" data-action="new-journal">Eintrag hinzufügen</button></div>
+          <div class="heading-actions journal-heading-actions"><label class="date-picker"><span class="visually-hidden">Tag</span><input id="journal-date" type="date" aria-label="Journaltag" /></label><button class="primary" data-action="new-journal">Eintrag hinzufügen</button></div>
         </div>
         <div id="journal-list" class="list timeline"></div>
       </section>

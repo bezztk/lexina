@@ -51,6 +51,7 @@ function showView(name) {
   if (name === "words") loadWords();
   if (name === "quotes") loadQuotes();
   if (name === "journal") loadJournal();
+  if (name === "vocabulary") loadVocabularyUnits();
   if (name === "settings") loadTags();
 }
 
@@ -245,4 +246,5 @@ journalDate.value = localDateTime().slice(0, 10);
 journalDate.addEventListener("change", () => { resetJournalForm(); loadJournal(); });
 resetJournalForm();
 initWordArea();
+initVocabularyArea();
 showView(location.hash.slice(1) || "words");

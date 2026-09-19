@@ -5,6 +5,7 @@ import { journalRouter } from "./routes/journal.js";
 import { quotesRouter, tagsRouter } from "./routes/quotes.js";
 import { seedRouter } from "./routes/seed.js";
 import { wordsRouter, spacesRouter } from "./routes/words.js";
+import { vocabularyEntriesRouter,vocabularyUnitsRouter } from "./routes/vocabulary.js";
 
 const app = express();
 const port = Number(process.env.LEXINA_PORT || 3000);
@@ -17,6 +18,8 @@ app.use("/api/quotes", quotesRouter);
 app.use("/api/tags", tagsRouter);
 app.use("/api/journal", journalRouter);
 app.use("/api/seed", seedRouter);
+app.use("/api/vocabulary-units",vocabularyUnitsRouter);
+app.use("/api/vocabulary-entries",vocabularyEntriesRouter);
 
 app.listen(port, () => {
   console.log(`Lexina läuft auf http://localhost:${port}`);

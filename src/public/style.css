@@ -762,6 +762,19 @@ blockquote {
 .card-main .word-detail-line { display: flex; min-height: 1.15rem; gap: 0.35rem; margin: 0.18rem 0 0; color: #596372; font-size: 0.78rem; line-height: 1.3; }
 .detail-label { flex: 0 0 auto; color: #384252; font-weight: 650; }
 .english-translation { display: inline-block; padding: 0.02rem 0.3rem; border: 1px solid #898b58; border-radius: 2px; background: rgba(125, 129, 70, 0.13); color: #626438; font-size: 0.76rem; font-weight: 700; }
+.vocabulary-unit-list { display: grid; grid-template-columns: repeat(auto-fill,minmax(13rem,1fr)); gap: 0.8rem; }
+.vocabulary-unit-card { display: flex; min-height: 5rem; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem; text-align: left; }
+.vocabulary-unit-card strong { color: #793f28; font-size: 1.05rem; }
+.vocabulary-unit-card span { color: #756550; font-size: 0.78rem; white-space: nowrap; }
+.vocabulary-back-row { margin-bottom: 0.45rem; }
+.quiet-button { min-height: 0; padding: 0.15rem 0; border: 0; background: transparent; color: #756550; }
+.quiet-button:hover { border: 0; background: transparent; color: #793f28; text-decoration: underline; }
+.vocabulary-entry-card { min-height: 0; padding: 0; }
+.vocabulary-entry-content { display: grid; width: 100%; min-height: 0; grid-template-columns: minmax(9rem,0.8fr) minmax(9rem,0.8fr) minmax(12rem,1.4fr); align-items: baseline; gap: 1rem; padding: 0.65rem 0.8rem; border: 0; background: transparent; text-align: left; }
+.vocabulary-entry-content:hover { border: 0; background: transparent; }
+.vocabulary-entry-content strong { color: #626438; font-size: 0.95rem; }
+.vocabulary-entry-content span { color: #493a2c; font-weight: 650; }
+.vocabulary-entry-content small { color: #756550; font-size: 0.8rem; }
 .meaning-card-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .meaning-card-links { display: flex; min-width: 0; flex: 1 1 auto; align-items: baseline; gap: 0.65rem; }
 .meaning-assigned-words { display: flex; min-width: 0; align-items: baseline; gap: 0.35rem; flex-wrap: wrap; }
@@ -788,6 +801,7 @@ button:disabled { opacity: 0.45; cursor: default; }
   .meaning-group-header, .meaning-card-summary { align-items: start; flex-direction: column; gap: 0.3rem; }
   .meaning-card-links { flex-wrap: wrap; }
   .meaning-group-header > p, .meaning-card-summary p { text-align: left; }
+  .vocabulary-entry-content { grid-template-columns: 1fr; gap: 0.2rem; }
 }
 
 /* Experimental sand-paper theme. Kept as one block so it can be removed cleanly. */

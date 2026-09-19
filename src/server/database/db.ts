@@ -126,4 +126,21 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_journal_tags_tag_id ON journal_tags(tag_id);
+
+  CREATE TABLE IF NOT EXISTS vocabulary_units (
+    id INTEGER PRIMARY KEY,
+    label TEXT NOT NULL CHECK(length(trim(label)) > 0),
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS vocabulary_entries (
+    id INTEGER PRIMARY KEY,
+    unit_id INTEGER NOT NULL REFERENCES vocabulary_units(id) ON DELETE CASCADE,
+    english_term TEXT NOT NULL CHECK(length(trim(english_term)) > 0),
+    german_translation TEXT NOT NULL CHECK(length(trim(german_translation)) > 0),
+    german_explanation TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_vocabulary_entries_unit ON vocabulary_entries(unit_id,created_at,id);
 `);

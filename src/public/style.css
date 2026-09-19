@@ -72,7 +72,7 @@ nav {
 main {
   width: min(1040px, calc(100% - 3rem));
   margin: 0 auto;
-  padding: 2.25rem 0 4rem;
+  padding: 1.25rem 0 4rem;
 }
 
 .view { display: none; }
@@ -618,6 +618,20 @@ blockquote {
   gap: 0.4rem;
 }
 
+.word-card .tags, .journal-card .tags {
+  margin: 0.45rem 0 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .tag-choice {
   position: relative;
   display: block;
@@ -702,15 +716,13 @@ blockquote {
 }
 
 /* Word inventory: compact cards and controls that also work with touch. */
-.quick-capture, .word-filters, .field-pair, .inline-create {
+.field-pair, .inline-create {
   display: flex;
   align-items: end;
   gap: 0.65rem;
 }
-.quick-capture { padding: 0.9rem; border: 1px solid #c5cbd4; background: #f8f9fa; margin-bottom: 1rem; }
-.quick-capture label:first-child, .word-filters label:first-child { flex: 1; }
-.quick-capture label, .word-filters label, .field-pair label, .inline-create label { min-width: 0; }
-.word-filters { flex-wrap: wrap; margin-bottom: 1.2rem; }
+.field-pair label, .inline-create label { min-width: 0; }
+.word-search-wrap { width: min(100%, 760px); margin: 0 0 1.2rem auto; }
 #words-view > section { margin-top: 1.4rem; }
 #words-view > section > h2 { font-size: 1rem; margin: 0 0 0.65rem; }
 #words-view .draft-section { border-top: 3px solid #ad6200; padding-top: 0.9rem; }
@@ -751,11 +763,8 @@ blockquote {
 .space-order-row button { min-width: 2.2rem; min-height: 2.2rem; font-size: 0.76rem; }
 button:disabled { opacity: 0.45; cursor: default; }
 @media (max-width: 640px) {
-  .quick-capture, .inline-create { flex-wrap: wrap; }
-  .quick-capture label:first-child, .inline-create label { flex-basis: 100%; }
-  .quick-capture label:nth-child(2) { flex: 1; }
-  .word-filters label { flex: 1 1 40%; }
-  .word-filters label:first-child { flex-basis: 100%; }
+  .inline-create { flex-wrap: wrap; }
+  .inline-create label { flex-basis: 100%; }
   .meaning-space-card { flex-direction: column; }
   .meaning-space-card .word-summary { flex-direction: column; gap: 0.3rem; }
   .space-order-row { align-items: start; flex-direction: column; }

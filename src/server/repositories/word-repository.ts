@@ -6,9 +6,9 @@ export type Language = (typeof LANGUAGES)[number];
 export interface TranslationInput { language: Language; text: string; note: string; linkedWordId: number | null }
 export interface WordInput {
   term: string; language: Language; meaning: string; note: string; status: WordStatus;
-  exampleSentences: string[]; spaceIds: number[]; translations: TranslationInput[];
+  exampleSentences: string[]; spaceIds: number[]; translations: TranslationInput[]; tags?: string[];
 }
-export interface Word extends WordInput { id: number; createdAt: string; legacyData: unknown; translationIds: number[] }
+export interface Word extends Omit<WordInput, "tags"> { id: number; createdAt: string; legacyData: unknown; translationIds: number[]; tags: string[] }
 export interface Space { id: number; label: string; note: string; exampleSentences: string[]; wordIds: number[]; legacyData: unknown }
 const selectWord = "SELECT id,term,language,meaning,note,status,created_at AS createdAt,legacy_data AS legacyData FROM word_units";
 
@@ -19,6 +19,7 @@ function hydrate(row: Record<string, unknown>): Word {
     ...row, legacyData: row.legacyData ? JSON.parse(String(row.legacyData)) : null,
     exampleSentences: (db.prepare("SELECT value FROM unit_examples WHERE word_id=? ORDER BY position,id").all(id) as { value: string }[]).map(r => r.value),
     spaceIds: (db.prepare("SELECT space_id AS id FROM space_words WHERE word_id=? ORDER BY space_id").all(id) as { id: number }[]).map(r => r.id),
+    tags: (db.prepare("SELECT t.name FROM tags t JOIN word_tags wt ON wt.tag_id=t.id WHERE wt.word_id=? ORDER BY t.name COLLATE NOCASE").all(id) as { name: string }[]).map(r => r.name),
     translations: translations.map(({ id: _id, ...translation }) => translation), translationIds: translations.map(t => t.id),
   } as Word;
 }
@@ -48,6 +49,13 @@ function replaceDetails(id: number, input: WordInput): void {
   db.prepare("DELETE FROM translations WHERE word_id=?").run(id);
   input.translations.forEach((t, position) => db.prepare("INSERT INTO translations(word_id,language,text,note,linked_word_id,position) VALUES (?,?,?,?,?,?)")
     .run(id,t.language,t.text,t.note,t.linkedWordId,position));
+  db.prepare("DELETE FROM word_tags WHERE word_id=?").run(id);
+  const findTag = db.prepare("SELECT id FROM tags WHERE name=? COLLATE NOCASE");
+  const linkTag = db.prepare("INSERT INTO word_tags(word_id,tag_id) VALUES (?,?)");
+  for (const name of [...new Set(input.tags || [])]) {
+    const tag = findTag.get(name) as { id: number } | undefined;
+    if (tag) linkTag.run(id,tag.id);
+  }
 }
 export const createWord = db.transaction((input: WordInput): Word => {
   const id = Number(db.prepare("INSERT INTO word_units(term,language,meaning,note,status) VALUES (@term,@language,@meaning,@note,@status)").run(input).lastInsertRowid);

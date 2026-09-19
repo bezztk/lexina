@@ -24,17 +24,10 @@
       <p id="message" class="message" aria-live="polite" hidden></p>
 
       <section id="words-view" class="view active">
-        <div class="view-heading"><h1>Wörter</h1><button data-action="new-space">Bedeutungsraum anlegen</button></div>
-        <form id="quick-word-form" class="quick-capture">
-          <label>Wort schnell erfassen<input name="term" required placeholder="Ein Wort für später …" autocomplete="off" /></label>
-          <label>Sprache<select name="language"><option value="de">Deutsch</option><option value="en">Englisch</option><option value="tr">Türkisch</option></select></label>
-          <button class="primary">Hinzufügen</button>
-        </form>
-        <div class="word-filters">
-          <label>Suchen<input id="word-search" type="search" placeholder="Wort, Bedeutung, Übersetzung oder Raum" /></label>
-          <label>Status<select id="word-status-filter"><option value="">Alle Status</option><option value="draft">Entwurf</option><option value="ready">Bereit</option><option value="learning">Im Lernen</option></select></label>
-          <label>Sprache<select id="word-language-filter"><option value="">Alle Sprachen</option><option value="de">Deutsch</option><option value="en">Englisch</option><option value="tr">Türkisch</option></select></label>
-          <label>Zuordnung<select id="word-assignment-filter"><option value="">Alle Wörter</option><option value="none">Ohne Bedeutungsraum</option></select></label>
+        <div class="view-heading"><h1>Wörter</h1><div class="heading-actions"><button data-action="new-space">Bedeutungsraum anlegen</button><button class="primary" data-action="new-word">Wort hinzufügen</button></div></div>
+        <div class="word-search-wrap">
+          <label class="visually-hidden" for="word-search">Wörter durchsuchen</label>
+          <input id="word-search" type="search" placeholder="Wort, Bedeutung, Übersetzung, Tag oder Raum suchen" />
         </div>
         <section class="draft-section" aria-labelledby="draft-heading"><h2 id="draft-heading">Entwürfe <span id="draft-count"></span></h2><p class="section-hint">Schnell gesammelt, später ausarbeiten. Klicke auf ein Wort zum Bearbeiten.</p><div id="draft-list" class="list"></div></section>
         <section aria-labelledby="inventory-heading"><h2 id="inventory-heading">Weitere Wörter</h2><div id="word-list" class="list"></div></section>
@@ -51,6 +44,7 @@
               <label>Sprache<select name="language"><option value="de">Deutsch</option><option value="en">Englisch</option><option value="tr">Türkisch</option></select></label>
               <label>Status<select name="status"><option value="draft">Entwurf</option><option value="ready">Bereit</option><option value="learning">Im Lernen</option></select></label>
             </div>
+            <fieldset><legend>Tags</legend><div id="word-tags" class="tag-options"></div></fieldset>
             <label>Konkrete Bedeutung<textarea name="meaning" rows="2"></textarea></label>
             <fieldset class="repeater-field"><legend>Beispielsätze</legend><div id="example-sentences" class="repeater"></div><button type="button" class="add-row" data-add-row="example-sentences">Weiteren Satz hinzufügen</button></fieldset>
             <label>Notiz<textarea name="note" rows="3"></textarea></label>
@@ -120,6 +114,7 @@
           <div class="modal-body">
             <input type="hidden" name="id" />
             <label>Zeitpunkt<input name="entryAt" type="datetime-local" required /></label>
+            <fieldset><legend>Tags</legend><div id="journal-tags" class="tag-options"></div></fieldset>
             <label>Eintrag<textarea name="content" rows="5" required></textarea></label>
           </div>
           <footer class="form-actions modal-footer"><button type="button" data-action="close-journal">Abbrechen</button><button class="primary" type="submit">Speichern</button></footer>

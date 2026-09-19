@@ -43,6 +43,14 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_quote_tags_tag_id ON quote_tags(tag_id);
 
+  CREATE TABLE IF NOT EXISTS word_tags (
+    word_id INTEGER NOT NULL REFERENCES word_units(id) ON DELETE CASCADE,
+    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (word_id, tag_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_word_tags_tag_id ON word_tags(tag_id);
+
   CREATE TABLE IF NOT EXISTS journal_entries (
     id INTEGER PRIMARY KEY,
     content TEXT NOT NULL,
@@ -53,4 +61,12 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_journal_entries_entry_at
     ON journal_entries(entry_at);
+
+  CREATE TABLE IF NOT EXISTS journal_tags (
+    journal_id INTEGER NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
+    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (journal_id, tag_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_journal_tags_tag_id ON journal_tags(tag_id);
 `);

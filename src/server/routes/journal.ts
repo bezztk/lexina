@@ -10,12 +10,13 @@ export const journalRouter = Router();
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const dateTimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/;
 
-function parseInput(body: unknown): { content: string; entryAt: string } | null {
+function parseInput(body: unknown): { content: string; entryAt: string; tags: string[] } | null {
   if (!body || typeof body !== "object") return null;
   const data = body as Record<string, unknown>;
   const content = typeof data.content === "string" ? data.content.trim() : "";
   const entryAt = typeof data.entryAt === "string" ? data.entryAt : "";
-  return content && dateTimePattern.test(entryAt) ? { content, entryAt } : null;
+  const tags = Array.isArray(data.tags) ? data.tags.filter((tag): tag is string => typeof tag === "string").map(tag => tag.trim()).filter(Boolean) : [];
+  return content && dateTimePattern.test(entryAt) ? { content, entryAt, tags } : null;
 }
 
 journalRouter.get("/", (request, response) => {

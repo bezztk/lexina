@@ -17,23 +17,21 @@ function showLegacy(selector,data) {
 }
 async function loadWords() {
   try {
-    [state.words,state.spaces] = await Promise.all([api("/api/words"),api("/api/spaces")]);
+    [state.words,state.spaces] = await Promise.all([api("/api/words"),api("/api/spaces"),loadTags()]);
     renderWords();
   } catch (error) { notify(error.message); }
 }
 function matchesWord(word) {
   const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();
-  const status = document.querySelector("#word-status-filter").value;
-  const language = document.querySelector("#word-language-filter").value;
-  const unassigned = document.querySelector("#word-assignment-filter").value === "none";
   const spaces = state.spaces.filter(s => word.spaceIds.includes(s.id)).map(s => s.label);
-  const haystack = [word.term,word.meaning,word.note,...word.exampleSentences,...spaces,...word.translations.flatMap(t => [t.text,t.note])].join(" ").toLocaleLowerCase();
-  return (!query || haystack.includes(query)) && (!status || word.status === status) && (!language || word.language === language) && (!unassigned || !word.spaceIds.length);
+  const haystack = [word.term,word.meaning,word.note,...word.tags,...word.exampleSentences,...spaces,...word.translations.flatMap(t => [t.text,t.note])].join(" ").toLocaleLowerCase();
+  return !query || haystack.includes(query);
 }
 function wordCard(word) {
   const spaces = state.spaces.filter(s => word.spaceIds.includes(s.id));
   return '<article class="card word-card inventory-card"><div class="card-main"><div class="word-summary"><h3><button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button></h3><span class="language-label">' + languageNames[word.language] + '</span><span class="inventory-status status-' + word.status + '">' + statusNames[word.status] + '</span></div>' +
     (word.meaning ? '<p class="word-meaning">' + escapeHtml(word.meaning) + "</p>" : "") +
+    (word.tags.length ? '<div class="tags">' + word.tags.map(tag => '<span>' + escapeHtml(tag) + '</span>').join("") + '</div>' : '') +
     '<p class="word-memberships">' + (spaces.length ? spaces.map(s => '<button class="space-link" data-edit-space="' + s.id + '">' + escapeHtml(s.label) + "</button>").join(" · ") : "Ohne Bedeutungsraum") + '</p></div><button class="icon-button danger" data-delete-word="' + word.id + '" aria-label="' + escapeHtml(word.term) + ' endgültig löschen">' + icons.trash + "</button></article>";
 }
 function renderWords() {
@@ -43,7 +41,7 @@ function renderWords() {
   document.querySelector("#draft-list").innerHTML = drafts.map(wordCard).join("") || empty("Keine Entwürfe für diese Auswahl.");
   document.querySelector("#word-list").innerHTML = words.filter(w => w.status !== "draft").map(wordCard).join("") || empty("Keine weiteren Wörter für diese Auswahl.");
   const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();
-  const filtered = Boolean(query || document.querySelector("#word-status-filter").value || document.querySelector("#word-language-filter").value || document.querySelector("#word-assignment-filter").value);
+  const filtered = Boolean(query);
   const spaces = state.spaces.filter(s => !filtered || s.wordIds.some(id => words.some(w => w.id === id)) || (!s.wordIds.length && query && s.label.toLocaleLowerCase().includes(query)));
   document.querySelector("#space-list").innerHTML = spaces.map(space => {
     const visibleWords = space.wordIds.map(id => words.find(w => w.id === id)).filter(Boolean);
@@ -91,13 +89,14 @@ function refreshTranslationTargets(row,linkedId) {
     candidates.map(w => '<option value="' + w.id + '"' + (w.id === linkedId ? " selected" : "") + ">" + escapeHtml(w.term + (w.meaning ? " — " + w.meaning : "") + " · #" + w.id + " · " + statusNames[w.status]) + "</option>").join("");
 }
 function openWordForm(word) {
-  document.querySelector("#word-dialog-title").textContent = "Wort bearbeiten";
+  document.querySelector("#word-dialog-title").textContent = word ? "Wort bearbeiten" : "Wort hinzufügen";
   for (const key of ["id","term","language","status","meaning","note"]) wordForm.elements[key].value = word?.[key] ?? ({ language: "de",status: "draft" }[key] || "");
   fillRepeater("example-sentences",word?.exampleSentences || []);
   selectedSpaceIds = new Set(word?.spaceIds || []);
   document.querySelector("#space-search").value = "";
   document.querySelector("#inline-space-label").value = "";
   renderSpaceOptions();
+  renderTagOptions("#word-tags",word?.tags || []);
   document.querySelector("#translation-list").replaceChildren();
   (word?.translations || []).forEach(addTranslationRow);
   showLegacy("#word-legacy",word?.legacyData);
@@ -111,6 +110,7 @@ async function saveWordEditor(close = true) {
   const data = Object.fromEntries(new FormData(wordForm));
   const id = data.id;
   data.spaceIds = [...selectedSpaceIds];
+  data.tags = selectedTags("#word-tags");
   data.exampleSentences = [...document.querySelectorAll("#example-sentences textarea")].map(f => f.value);
   data.translations = [...document.querySelectorAll(".translation-row")].map(row => ({
     language: row.querySelector(".translation-language").value,text: row.querySelector(".translation-text").value,
@@ -142,27 +142,13 @@ function openSpaceForm(space) {
   form.elements.label.focus();
 }
 function initWordArea() {
-  ["#word-search","#word-status-filter","#word-language-filter","#word-assignment-filter"].forEach(selector => document.querySelector(selector).addEventListener("input",renderWords));
+  document.querySelector("#word-search").addEventListener("input",renderWords);
   document.querySelector("#space-search").addEventListener("input",renderSpaceOptions);
   document.querySelector("#word-space-options").addEventListener("change",event => {
     const input = event.target;
     if (input.matches('input[type="checkbox"]')) {
       if (input.checked) selectedSpaceIds.add(Number(input.value)); else selectedSpaceIds.delete(Number(input.value));
     }
-  });
-  document.querySelector("#quick-word-form").addEventListener("submit",async event => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const button = form.querySelector("button");
-    button.disabled = true;
-    try {
-      await api("/api/words",{ method: "POST",body: JSON.stringify(Object.fromEntries(new FormData(form))) });
-      form.elements.term.value = "";
-      // Newly captured drafts must remain visible even after a filtered search.
-      ["#word-search","#word-status-filter","#word-language-filter","#word-assignment-filter"].forEach(selector => { document.querySelector(selector).value = ""; });
-      await loadWords();
-      form.elements.term.focus();
-    } catch (error) { notify(error.message); } finally { button.disabled = false; }
   });
   wordForm.addEventListener("submit",async event => {
     event.preventDefault();

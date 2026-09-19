@@ -26,16 +26,17 @@ export function parseInput(body: unknown): WordInput | null {
   const exampleSentences = textList(data.exampleSentences);
   const spaceIds = data.spaceIds ?? [];
   const rawTranslations = data.translations ?? [];
+  const tags = textList(data.tags);
   if (!term || !LANGUAGES.includes(language as Language) || !WORD_STATUSES.includes(status as WordStatus)
     || !exampleSentences || !Array.isArray(spaceIds) || spaceIds.some(v => id(v) === null || typeof v !== "number")
-    || new Set(spaceIds).size !== spaceIds.length || !Array.isArray(rawTranslations)) return null;
+    || new Set(spaceIds).size !== spaceIds.length || !Array.isArray(rawTranslations) || !tags) return null;
   const translations: TranslationInput[] = [];
   for (const t of rawTranslations) {
     if (!t || typeof t !== "object" || !LANGUAGES.includes(t.language) || !text(t.text)
       || (t.linkedWordId != null && (id(t.linkedWordId) === null || typeof t.linkedWordId !== "number"))) return null;
     translations.push({ language: t.language,text: text(t.text),note: text(t.note),linkedWordId: t.linkedWordId ?? null });
   }
-  return { term,language: language as Language,status: status as WordStatus,meaning: text(data.meaning),note: text(data.note),exampleSentences,spaceIds,translations };
+  return { term,language: language as Language,status: status as WordStatus,meaning: text(data.meaning),note: text(data.note),exampleSentences,spaceIds,translations,tags };
 }
 // Transactions in the repository roll back invalid relations; present readable errors.
 const safe = (handler: (request: Request,response: Response) => unknown) => (request: Request,response: Response) => {

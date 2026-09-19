@@ -167,15 +167,19 @@ test("HTTP capture defaults, validation, space relationships, translations and q
     assert.equal((await request("/api/spaces/" + space.data.id,"PUT",{ label: "Tempo",wordIds: [] })).status,200);
     assert.ok(repo.getWord(quick.data.id));
     await request("/api/tags","POST",{ name: "Test" });
+    const taggedWord = await request("/api/words/" + quick.data.id,"PUT",{ ...linked.data,tags: ["Test"] });
+    assert.deepEqual(taggedWord.data.tags,["Test"]);
     const quote = await request("/api/quotes","POST",{ type: "quote",content: "Ein Testzitat",note: "Notiz",tags: ["Test"] });
     assert.equal(quote.status,201);
     assert.ok((await request("/api/quotes")).data.some(q => q.id === quote.data.id && q.tags.includes("Test")));
     assert.equal((await request("/api/quotes/" + quote.data.id,"PUT",{ type: "poem",content: "Gedicht",tags: [] })).status,200);
     assert.equal((await request("/api/quotes/" + quote.data.id,"DELETE")).status,204);
-    const journal = await request("/api/journal","POST",{ content: "Testjournal",entryAt: "2026-09-18T12:00" });
+    const journal = await request("/api/journal","POST",{ content: "Testjournal",entryAt: "2026-09-18T12:00",tags: ["Test"] });
     assert.equal(journal.status,201);
+    assert.deepEqual(journal.data.tags,["Test"]);
     assert.ok((await request("/api/journal?date=2026-09-18")).data.some(j => j.id === journal.data.id));
-    assert.equal((await request("/api/journal/" + journal.data.id,"PUT",{ content: "Bearbeitet",entryAt: "2026-09-18T13:00" })).status,200);
+    const updatedJournal = await request("/api/journal/" + journal.data.id,"PUT",{ content: "Bearbeitet",entryAt: "2026-09-18T13:00",tags: [] });
+    assert.equal(updatedJournal.status,200); assert.deepEqual(updatedJournal.data.tags,[]);
     assert.equal((await request("/api/journal/" + journal.data.id,"DELETE")).status,204);
     assert.deepEqual(db.pragma("foreign_key_check"),[]);
   } finally { await new Promise(resolve => server.close(resolve)); }

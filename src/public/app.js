@@ -79,15 +79,23 @@ async function loadTags() {
   `).join("") : empty("Noch keine Tags angelegt.");
 }
 
+function renderTagOptions(selector,selected = []) {
+  document.querySelector(selector).innerHTML = state.tags.length ? state.tags.map((tag) => `
+    <label class="tag-choice"><input type="checkbox" value="${escapeHtml(tag.name)}" ${selected.includes(tag.name) ? "checked" : ""} /><span>${escapeHtml(tag.name)}</span></label>
+  `).join("") : '<p class="empty compact-empty">Lege zuerst Tags in der Verwaltung an.</p>';
+}
+
+function selectedTags(selector) {
+  return [...document.querySelectorAll(`${selector} input:checked`)].map((input) => input.value);
+}
+
 function openQuoteForm(entry) {
   document.querySelector("#quote-dialog-title").textContent = entry ? "Eintrag bearbeiten" : "Eintrag hinzufügen";
   quoteForm.elements.id.value = entry?.id ?? "";
   quoteForm.elements.type.value = entry?.type ?? "quote";
   quoteForm.elements.content.value = entry?.content ?? "";
   quoteForm.elements.note.value = entry?.note ?? "";
-  document.querySelector("#quote-tags").innerHTML = state.tags.length ? state.tags.map((tag) => `
-    <label class="tag-choice"><input type="checkbox" value="${escapeHtml(tag.name)}" ${entry?.tags.includes(tag.name) ? "checked" : ""} /><span>${escapeHtml(tag.name)}</span></label>
-  `).join("") : '<p class="empty compact-empty">Lege zuerst Tags in der Verwaltung an.</p>';
+  renderTagOptions("#quote-tags",entry?.tags || []);
   quoteDialog.showModal();
   quoteForm.elements.content.focus();
 }
@@ -98,7 +106,7 @@ quoteForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(quoteForm));
   const id = data.id;
-  data.tags = [...document.querySelectorAll("#quote-tags input:checked")].map((input) => input.value);
+  data.tags = selectedTags("#quote-tags");
   try {
     await api(id ? `/api/quotes/${id}` : "/api/quotes", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
     closeQuoteForm(); await loadQuotes(); notify("Eintrag gespeichert.");
@@ -107,11 +115,11 @@ quoteForm.addEventListener("submit", async (event) => {
 
 async function loadJournal() {
   try {
-    state.journal = await api(`/api/journal?date=${journalDate.value}`);
+    [state.journal] = await Promise.all([api(`/api/journal?date=${journalDate.value}`),loadTags()]);
     document.querySelector("#journal-list").innerHTML = state.journal.length ? state.journal.map((entry) => `
       <article class="card journal-card hover-card" tabindex="0">
         <time datetime="${entry.entryAt}">${escapeHtml(entry.entryAt.slice(11, 16))}</time>
-        <div class="card-main"><p>${escapeHtml(entry.content)}</p></div>
+        <div class="card-main"><p>${escapeHtml(entry.content)}</p>${entry.tags.length ? `<div class="tags">${entry.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}</div>
         <div class="card-hover-actions"><button class="icon-button" data-edit-journal="${entry.id}" aria-label="Journaleintrag bearbeiten">${icons.pencil}</button><button class="icon-button danger" data-delete-journal="${entry.id}" aria-label="Journaleintrag löschen">${icons.trash}</button></div>
       </article>`).join("") : empty("Für diesen Tag gibt es noch keinen Eintrag.");
   } catch { notify("Journal konnte nicht geladen werden."); }
@@ -131,6 +139,7 @@ function openJournalForm(entry) {
     journalForm.elements.entryAt.value = entry.entryAt.slice(0, 16);
     journalForm.elements.content.value = entry.content;
   }
+  renderTagOptions("#journal-tags",entry?.tags || []);
   journalDialog.showModal();
   journalForm.elements.content.focus();
 }
@@ -141,6 +150,7 @@ journalForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(journalForm));
   const id = data.id;
+  data.tags = selectedTags("#journal-tags");
   try {
     await api(id ? `/api/journal/${id}` : "/api/journal", { method: id ? "PUT" : "POST", body: JSON.stringify(data) });
     journalDate.value = String(data.entryAt).slice(0, 10); closeJournalForm(); await loadJournal(); notify("Journaleintrag gespeichert.");

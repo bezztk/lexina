@@ -4,6 +4,8 @@ let selectedWordTag = "";
 const spaceDialog = () => document.querySelector("#space-dialog");
 const spaceForm = () => document.querySelector("#space-form");
 const wordSpaceDialog = () => document.querySelector("#word-space-dialog");
+const wordImportDialog = () => document.querySelector("#word-import-dialog");
+const wordImportForm = () => document.querySelector("#word-import-form");
 function showEditorError(selector,error) {
   const element = document.querySelector(selector);
   element.textContent = error.message || "Die Änderung konnte nicht gespeichert werden.";
@@ -98,6 +100,21 @@ function closeWordForm() {
   if (wordSpaceDialog().open) wordSpaceDialog().close();
   wordDialog.close(); wordForm.reset(); selectedSpaceId = null;
 }
+function parseWordImportJson(value) {
+  let json = String(value).trim();
+  json = json.replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/i,"");
+  const start = json.indexOf("{");
+  const end = json.lastIndexOf("}");
+  if (start >= 0 && end > start) json = json.slice(start,end + 1);
+  return JSON.parse(json);
+}
+function openWordImport() {
+  wordImportForm().reset();
+  document.querySelector("#word-import-error").hidden = true;
+  wordImportDialog().showModal();
+  wordImportForm().elements.json.focus();
+}
+function closeWordImport() { wordImportDialog().close(); wordImportForm().reset(); }
 async function saveWordEditor() {
   if (!wordForm.reportValidity()) return null;
   const data = Object.fromEntries(new FormData(wordForm));
@@ -137,6 +154,7 @@ function initWordArea() {
       item.classList.toggle("active",item === button); item.setAttribute("aria-selected",String(item === button));
     });
     document.querySelector(".word-filters").hidden = section !== "inventory";
+    document.querySelector('[data-action="import-words"]').hidden = section !== "inventory";
     document.querySelector('[data-action="new-word"]').hidden = section !== "inventory";
     document.querySelector('[data-action="new-space"]').hidden = section !== "meanings";
     document.querySelector("#word-overview").hidden = section !== "inventory";
@@ -148,6 +166,22 @@ function initWordArea() {
     const button = wordForm.querySelector('button:not([type="button"])');
     button.disabled = true;
     try { await saveWordEditor(); } catch (error) { showEditorError("#word-error",error); } finally { button.disabled = false; }
+  });
+  wordImportForm().addEventListener("submit",async event => {
+    event.preventDefault();
+    const button = wordImportForm().querySelector('button[type="submit"]');
+    const error = document.querySelector("#word-import-error");
+    button.disabled = true;
+    error.hidden = true;
+    try {
+      const payload = parseWordImportJson(wordImportForm().elements.json.value);
+      const result = await api("/api/words/import",{ method: "POST",body: JSON.stringify(payload) });
+      closeWordImport(); await loadWords();
+      notify(`${result.importedWords} ${result.importedWords === 1 ? "Wort wurde" : "Wörter wurden"} importiert.`);
+    } catch (importError) {
+      error.textContent = importError instanceof SyntaxError ? "Das eingefügte JSON ist nicht gültig." : importError.message;
+      error.hidden = false;
+    } finally { button.disabled = false; }
   });
   spaceForm().addEventListener("submit",async event => {
     event.preventDefault();
@@ -163,11 +197,18 @@ function initWordArea() {
   });
   spaceDialog().addEventListener("click",event => { if (event.target === spaceDialog()) spaceDialog().close(); });
   wordSpaceDialog().addEventListener("click",event => { if (event.target === wordSpaceDialog()) wordSpaceDialog().close(); });
+  wordImportDialog().addEventListener("click",event => { if (event.target === wordImportDialog()) closeWordImport(); });
   document.addEventListener("click",async event => {
     const button = event.target.closest("button");
     if (!button) return;
     try {
       if (button.dataset.action === "new-space") openSpaceForm();
+      if (button.dataset.action === "import-words") openWordImport();
+      if (button.dataset.action === "close-word-import") closeWordImport();
+      if (button.dataset.action === "copy-word-prompt") {
+        await navigator.clipboard.writeText(document.querySelector("#word-import-prompt").value);
+        notify("Prompt kopiert.");
+      }
       if (button.dataset.action === "close-space") spaceDialog().close();
       if (button.dataset.action === "choose-word-space") openWordSpacePicker();
       if (button.dataset.action === "close-word-space") wordSpaceDialog().close();

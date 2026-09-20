@@ -109,6 +109,36 @@ test("HTTP validates and persists the simplified word shape alongside other cont
     assert.equal(updated.status,200);
     assert.equal(updated.data.englishTranslation,"quickly");
 
+    const invalidImport = await request("/api/words/import","POST",{
+      meanings: [{ label: "Gefühle",explanation: "Emotionen",words: [{ term: "freudig" },{ term: "" }] }],
+      words: [],
+    });
+    assert.equal(invalidImport.status,400);
+    assert.equal((await request("/api/spaces")).data.some(item => item.label === "Gefühle"),false);
+    assert.equal((await request("/api/words")).data.some(item => item.term === "freudig"),false);
+
+    const imported = await request("/api/words/import","POST",{
+      meanings: [{
+        label: "Bewegung",explanation: "Arten der Fortbewegung",
+        words: [{
+          term: "flanieren",meaning: "gemächlich gehen",status: "learning",
+          exampleSentence: "Wir schlendern durch den Park.",englishTranslation: "to stroll",
+          englishExampleSentence: "We stroll through the park.",tags: ["Verb"],
+        }],
+      }],
+      words: [{ term: "behutsam",meaning: "vorsichtig",tags: ["Adverb"] }],
+    });
+    assert.equal(imported.status,201);
+    assert.deepEqual(imported.data,{ importedWords: 2,importedMeanings: 1 });
+    const importedSpace = (await request("/api/spaces")).data.find(item => item.label === "Bewegung");
+    const importedWords = (await request("/api/words")).data;
+    const strollImport = importedWords.find(item => item.term === "flanieren");
+    assert.equal(strollImport.meaningSpaceId,importedSpace.id);
+    assert.equal(strollImport.englishTranslation,"to stroll");
+    assert.deepEqual(strollImport.tags,["Verb"]);
+    assert.equal(importedWords.find(item => item.term === "behutsam").meaningSpaceId,null);
+    assert.ok((await request("/api/tags")).data.some(item => item.name === "Adverb"));
+
     const quote = await request("/api/quotes","POST",{ type: "quote",content: "Ein Testzitat",tags: ["Test"] });
     assert.equal(quote.status,201);
     const journal = await request("/api/journal","POST",{ content: "Testjournal",entryAt: "2026-09-18T12:00",tags: ["Test"] });

@@ -805,6 +805,8 @@ blockquote {
 .prompt-heading button { min-height: 1.9rem; padding: 0.3rem 0.55rem; font-size: 0.78rem; }
 .prompt-text { height: 7.5rem; min-height: 7.5rem; color: #665440; font-size: 0.78rem; line-height: 1.35; resize: none; }
 #vocabulary-import-form textarea[name="json"] { height: 10rem; min-height: 10rem; overflow-y: auto; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 0.76rem; resize: none; }
+.word-import-body { gap: 0.65rem; }
+#word-import-form textarea[name="json"] { height: 12rem; min-height: 12rem; overflow-y: auto; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 0.76rem; resize: none; }
 .meaning-card-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .meaning-card-links { display: flex; min-width: 0; flex: 1 1 auto; align-items: baseline; gap: 0.65rem; }
 .meaning-assigned-words { display: flex; min-width: 0; align-items: baseline; gap: 0.35rem; flex-wrap: wrap; }

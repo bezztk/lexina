@@ -8,6 +8,10 @@ export interface WordInput {
 }
 export interface Word extends Omit<WordInput, "tags"> { id: number; createdAt: string; tags: string[] }
 export interface Space { id: number; label: string; explanation: string; wordIds: number[] }
+export interface WordImportInput {
+  meanings: { label: string; explanation: string; words: WordInput[] }[];
+  words: WordInput[];
+}
 const selectWord = `SELECT id,term,meaning,status,example_sentence AS exampleSentence,
   english_translation AS englishTranslation,english_example_sentence AS englishExampleSentence,
   meaning_space_id AS meaningSpaceId,created_at AS createdAt FROM word_units`;
@@ -65,3 +69,20 @@ export const saveSpace = db.transaction((id: number | null,label: string,explana
   return listSpaces().find(s => s.id === id)!;
 });
 export function deleteSpace(id: number): boolean { return db.prepare("DELETE FROM meaning_spaces WHERE id=?").run(id).changes > 0; }
+
+export const importWords = db.transaction((input: WordImportInput): { spaces: Space[];words: Word[] } => {
+  const importedSpaces: Space[] = [];
+  const importedWords: Word[] = [];
+  const ensureTag = db.prepare("INSERT OR IGNORE INTO tags(name) VALUES (?)");
+  const addWord = (word: WordInput,meaningSpaceId: number | null) => {
+    for (const tag of word.tags || []) ensureTag.run(tag);
+    importedWords.push(createWord({ ...word,meaningSpaceId }));
+  };
+  for (const meaning of input.meanings) {
+    const space = saveSpace(null,meaning.label,meaning.explanation)!;
+    importedSpaces.push(space);
+    for (const word of meaning.words) addWord(word,space.id);
+  }
+  for (const word of input.words) addWord(word,null);
+  return { spaces: importedSpaces,words: importedWords };
+});

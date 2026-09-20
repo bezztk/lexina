@@ -26,7 +26,7 @@
       <p id="message" class="message" aria-live="polite" hidden></p>
 
       <section id="words-view" class="view active">
-        <div class="view-heading"><h1>Wörter</h1><div class="heading-actions word-heading-actions"><div class="word-search-wrap"><label class="visually-hidden" for="word-search">Wörter durchsuchen</label><input id="word-search" type="search" placeholder="Wort oder Bedeutung suchen" /></div><button class="primary" data-action="new-space" hidden>Bedeutung hinzufügen</button><button class="primary" data-action="new-word">Wort hinzufügen</button></div></div>
+        <div class="view-heading"><h1>Wörter</h1><div class="heading-actions word-heading-actions"><div class="word-search-wrap"><label class="visually-hidden" for="word-search">Wörter durchsuchen</label><input id="word-search" type="search" placeholder="Wort oder Bedeutung suchen" /></div><button data-action="import-words">JSON importieren</button><button class="primary" data-action="new-space" hidden>Bedeutung hinzufügen</button><button class="primary" data-action="new-word">Wort hinzufügen</button></div></div>
         <div class="word-inventory-toolbar">
           <div class="word-section-switch" role="tablist" aria-label="Wörterbereich">
             <button class="active" role="tab" aria-selected="true" data-word-section="inventory">Wörter</button>
@@ -61,6 +61,19 @@
             <p id="word-error" class="editor-error" aria-live="polite" hidden></p>
           </div>
           <footer class="form-actions modal-footer"><button type="button" data-action="close-word">Abbrechen</button><button class="primary">Speichern</button></footer>
+        </form>
+      </dialog>
+
+      <dialog id="word-import-dialog" aria-labelledby="word-import-dialog-title">
+        <form id="word-import-form" class="modal-form">
+          <header class="modal-header"><h2 id="word-import-dialog-title">Wörter importieren</h2><button type="button" class="icon-button close-button" data-action="close-word-import" aria-label="Schließen">×</button></header>
+          <div class="modal-body word-import-body">
+            <div class="prompt-heading"><strong>Prompt für ChatGPT</strong><button type="button" data-action="copy-word-prompt">Prompt kopieren</button></div>
+            <textarea id="word-import-prompt" class="prompt-text" rows="9" readonly>Erstelle aus meiner Vorlage ausschließlich ein gültiges JSON-Objekt für den Wörter-Import. Gruppierte Wörter stehen unter „meanings“ als {"label":"Bezeichnung","explanation":"Erklärung","words":[...]}; Wörter ohne übergeordnete Bedeutung stehen unter „words“. Jedes Wort hat zwingend „term“ und optional „meaning“, „status“ (draft, learning oder ready), „exampleSentence“, „englishTranslation“, „englishExampleSentence“ und „tags“ als Textliste. Format: {"meanings":[{"label":"Bewegung","explanation":"Arten der Fortbewegung","words":[{"term":"schlendern","meaning":"gemächlich gehen","status":"learning","exampleSentence":"Wir schlendern durch den Park.","englishTranslation":"to stroll","englishExampleSentence":"We stroll through the park.","tags":["Verb"]}]}],"words":[{"term":"behutsam","meaning":"vorsichtig","tags":["Adverb"]}]}. Verwende keine Markdown-Codeblöcke und keinen Text außerhalb des JSON.</textarea>
+            <label>JSON einfügen<textarea name="json" rows="11" placeholder='{"meanings":[],"words":[{"term":"behutsam"}]}' required></textarea></label>
+            <p id="word-import-error" class="editor-error" aria-live="polite" hidden></p>
+          </div>
+          <footer class="form-actions modal-footer"><button type="button" data-action="close-word-import">Abbrechen</button><button class="primary" type="submit">Importieren</button></footer>
         </form>
       </dialog>
 

@@ -12,6 +12,10 @@ function selectedVocabularyUnit() {
   return vocabularyState.units.find(unit => unit.id === vocabularyState.selectedUnitId) || null;
 }
 
+function formatVocabularyDate(value) {
+  return value ? new Intl.DateTimeFormat("de-DE",{ day: "2-digit",month: "2-digit",year: "numeric" }).format(new Date(value)) : "nicht erfasst";
+}
+
 async function loadVocabularyUnits() {
   try {
     vocabularyState.units = await api("/api/vocabulary-units");
@@ -23,12 +27,17 @@ async function loadVocabularyUnits() {
 
 function renderVocabularyUnits() {
   const list = document.querySelector("#vocabulary-unit-list");
-  list.innerHTML = vocabularyState.units.length ? vocabularyState.units.map(unit => `
-    <button class="vocabulary-unit-card" data-open-vocabulary-unit="${unit.id}">
-      <strong>${escapeHtml(unit.label)}</strong>
-      <span>${unit.entryCount} ${unit.entryCount === 1 ? "Vokabel" : "Vokabeln"}</span>
-    </button>
-  `).join("") : empty("Noch keine Units angelegt.");
+  list.innerHTML = vocabularyState.units.length ? vocabularyState.units.map(unit => {
+    const completed = unit.entryCount > 0 && unit.activeCount === 0;
+    return `<button class="vocabulary-unit-card${completed ? " completed" : ""}" data-open-vocabulary-unit="${unit.id}">
+      <span class="vocabulary-unit-card-heading"><strong>${escapeHtml(unit.label)}</strong><em class="vocabulary-unit-state ${completed ? "completed" : "open"}">${completed ? "Abgeschlossen" : `${unit.activeCount} offen`}</em></span>
+      <span class="vocabulary-unit-card-total">${unit.entryCount} ${unit.entryCount === 1 ? "Vokabel" : "Vokabeln"}</span>
+      <span class="vocabulary-unit-card-statuses">
+        <small class="vocabulary-summary-learning">${unit.learningCount} Lernen</small><small class="vocabulary-summary-consolidating">${unit.consolidatingCount} Festigen</small><small class="vocabulary-summary-secure">${unit.secureCount} Sicher</small><small class="vocabulary-summary-out">${unit.outCount} Aus Übung</small>
+      </span>
+      ${completed ? `<span class="vocabulary-unit-card-dates"><small>Erstellt ${formatVocabularyDate(unit.createdAt)}</small><small>Abgeschlossen ${formatVocabularyDate(unit.completedAt)}</small></span>` : ""}
+    </button>`;
+  }).join("") : empty("Noch keine Units angelegt.");
   const selected = selectedVocabularyUnit();
   document.querySelector("#vocabulary-unit-overview").hidden = Boolean(selected);
   document.querySelector("#vocabulary-entry-overview").hidden = !selected;
@@ -57,10 +66,16 @@ async function loadVocabularyEntries() {
 function renderVocabularySummary() {
   const counts = { learning: 0,consolidating: 0,secure: 0,out: 0 };
   vocabularyState.entries.forEach(entry => { counts[entry.status] += 1; });
-  const content = `<span><strong>${vocabularyState.entries.length}</strong> Gesamt</span>` + Object.entries(counts).map(([status,count]) =>
+  const unit = selectedVocabularyUnit();
+  const activeCount = vocabularyState.entries.length - counts.out;
+  const completed = vocabularyState.entries.length > 0 && activeCount === 0;
+  if (unit) Object.assign(unit,{ ...Object.fromEntries(Object.entries(counts).map(([status,count]) => [`${status}Count`,count])),entryCount: vocabularyState.entries.length,activeCount });
+  const state = `<span class="vocabulary-summary-state ${completed ? "completed" : "open"}"><strong>${completed ? "Abgeschlossen" : `${activeCount} offen`}</strong></span>`;
+  const countsContent = `<span><strong>${vocabularyState.entries.length}</strong> Gesamt</span>` + Object.entries(counts).map(([status,count]) =>
     `<span class="vocabulary-summary-${status}"><strong>${count}</strong> ${vocabularyStatusNames[status]}</span>`).join("");
-  document.querySelector("#vocabulary-status-summary").innerHTML = content;
-  document.querySelector("#vocabulary-training-summary").innerHTML = content;
+  const dates = unit && completed ? `<span class="vocabulary-summary-dates">Erstellt ${formatVocabularyDate(unit.createdAt)} · Abgeschlossen ${formatVocabularyDate(unit.completedAt)}</span>` : "";
+  document.querySelector("#vocabulary-status-summary").innerHTML = countsContent + state + dates;
+  document.querySelector("#vocabulary-training-summary").innerHTML = countsContent + state;
 }
 
 function renderVocabularyEntries() {
@@ -236,7 +251,7 @@ async function takeCurrentVocabularyOut(button) {
   try {
     const updated = await api(`/api/vocabulary-entries/${entry.id}/out`,{ method: "POST" });
     vocabularyState.entries = vocabularyState.entries.map(item => item.id === updated.id ? updated : item);
-    renderVocabularyEntries();
+    await loadVocabularyUnits();
     await loadNextVocabularyTrainingEntry();
     notify("Vokabel wurde aus der Übung genommen.");
   } catch { notify("Die Vokabel konnte nicht aus der Übung genommen werden."); }

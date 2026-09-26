@@ -8,7 +8,9 @@ export interface VocabularyUnit {
   consolidatingCount: number;
   secureCount: number;
   outCount: number;
+  activeCount: number;
   reviewStep: number;
+  completedAt: string | null;
   createdAt: string;
 }
 
@@ -57,11 +59,12 @@ export interface VocabularyEntryInput {
 
 export function listVocabularyUnits(): VocabularyUnit[] {
   return db.prepare(`
-    SELECT u.id,u.label,u.review_step AS reviewStep,u.created_at AS createdAt,count(e.id) AS entryCount,
+    SELECT u.id,u.label,u.review_step AS reviewStep,u.completed_at AS completedAt,u.created_at AS createdAt,count(e.id) AS entryCount,
       sum(CASE WHEN e.status='learning' THEN 1 ELSE 0 END) AS learningCount,
       sum(CASE WHEN e.status='consolidating' THEN 1 ELSE 0 END) AS consolidatingCount,
       sum(CASE WHEN e.status='secure' THEN 1 ELSE 0 END) AS secureCount,
-      sum(CASE WHEN e.status='out' THEN 1 ELSE 0 END) AS outCount
+      sum(CASE WHEN e.status='out' THEN 1 ELSE 0 END) AS outCount,
+      sum(CASE WHEN e.status<>'out' THEN 1 ELSE 0 END) AS activeCount
     FROM vocabulary_units u
     LEFT JOIN vocabulary_entries e ON e.unit_id=u.id
     GROUP BY u.id
@@ -134,13 +137,22 @@ export function getVocabularyEntry(id: number): VocabularyEntry | null {
   return row ? hydrateEntry(row) : null;
 }
 
-export function createVocabularyEntry(input: VocabularyEntryInput): VocabularyEntry {
+function refreshVocabularyUnitCompletion(unitId: number): void {
+  db.prepare(`UPDATE vocabulary_units SET completed_at=CASE
+    WHEN EXISTS (SELECT 1 FROM vocabulary_entries WHERE unit_id=@unitId)
+      AND NOT EXISTS (SELECT 1 FROM vocabulary_entries WHERE unit_id=@unitId AND status<>'out')
+    THEN coalesce(completed_at,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ELSE NULL END
+    WHERE id=@unitId`).run({ unitId });
+}
+
+export const createVocabularyEntry = db.transaction((input: VocabularyEntryInput): VocabularyEntry => {
   const id = Number(db.prepare(`
     INSERT INTO vocabulary_entries(unit_id,english_term,german_translation,german_explanation)
     VALUES (@unitId,@englishTerm,@germanTranslation,@germanExplanation)
   `).run(input).lastInsertRowid);
+  refreshVocabularyUnitCompletion(input.unitId);
   return getVocabularyEntry(id)!;
-}
+});
 
 export const importVocabularyEntries = db.transaction((inputs: VocabularyEntryInput[]): VocabularyEntry[] => {
   const insert = db.prepare(`
@@ -148,20 +160,28 @@ export const importVocabularyEntries = db.transaction((inputs: VocabularyEntryIn
     VALUES (@unitId,@englishTerm,@germanTranslation,@germanExplanation)
   `);
   const ids = inputs.map(input => Number(insert.run(input).lastInsertRowid));
+  new Set(inputs.map(input => input.unitId)).forEach(refreshVocabularyUnitCompletion);
   return ids.map(id => getVocabularyEntry(id)!);
 });
 
-export function updateVocabularyEntry(id: number,input: VocabularyEntryInput): VocabularyEntry | null {
+export const updateVocabularyEntry = db.transaction((id: number,input: VocabularyEntryInput): VocabularyEntry | null => {
+  const previous = db.prepare("SELECT unit_id AS unitId FROM vocabulary_entries WHERE id=?").get(id) as { unitId: number } | undefined;
+  if (!previous) return null;
   const result = db.prepare(`
     UPDATE vocabulary_entries SET unit_id=@unitId,english_term=@englishTerm,
       german_translation=@germanTranslation,german_explanation=@germanExplanation WHERE id=@id
   `).run({ id,...input });
+  refreshVocabularyUnitCompletion(previous.unitId);
+  if (input.unitId !== previous.unitId) refreshVocabularyUnitCompletion(input.unitId);
   return result.changes ? getVocabularyEntry(id) : null;
-}
+});
 
-export function deleteVocabularyEntry(id: number): boolean {
-  return db.prepare("DELETE FROM vocabulary_entries WHERE id=?").run(id).changes > 0;
-}
+export const deleteVocabularyEntry = db.transaction((id: number): boolean => {
+  const entry = db.prepare("SELECT unit_id AS unitId FROM vocabulary_entries WHERE id=?").get(id) as { unitId: number } | undefined;
+  if (!entry || !db.prepare("DELETE FROM vocabulary_entries WHERE id=?").run(id).changes) return false;
+  refreshVocabularyUnitCompletion(entry.unitId);
+  return true;
+});
 
 const statusWeights: Record<Exclude<VocabularyStatus,"out">,number> = {
   learning: 1,
@@ -251,6 +271,9 @@ export const reviewVocabularyEntry = db.transaction((id: number,result: Vocabula
   return getVocabularyEntry(id);
 });
 
-export function takeVocabularyEntryOut(id: number): VocabularyEntry | null {
-  return db.prepare("UPDATE vocabulary_entries SET status='out' WHERE id=? AND status<>'out'").run(id).changes ? getVocabularyEntry(id) : null;
-}
+export const takeVocabularyEntryOut = db.transaction((id: number): VocabularyEntry | null => {
+  const entry = getVocabularyEntry(id);
+  if (!entry || !db.prepare("UPDATE vocabulary_entries SET status='out' WHERE id=? AND status<>'out'").run(id).changes) return null;
+  refreshVocabularyUnitCompletion(entry.unitId);
+  return getVocabularyEntry(id);
+});

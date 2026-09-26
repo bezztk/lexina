@@ -131,6 +131,7 @@ db.exec(`
     id INTEGER PRIMARY KEY,
     label TEXT NOT NULL CHECK(length(trim(label)) > 0),
     review_step INTEGER NOT NULL DEFAULT 0,
+    completed_at TEXT,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   );
 
@@ -164,6 +165,7 @@ db.exec(`
 
 const vocabularyUnitColumns = (db.prepare("PRAGMA table_info(vocabulary_units)").all() as { name: string }[]).map(column => column.name);
 if (!vocabularyUnitColumns.includes("review_step")) db.exec("ALTER TABLE vocabulary_units ADD COLUMN review_step INTEGER NOT NULL DEFAULT 0");
+if (!vocabularyUnitColumns.includes("completed_at")) db.exec("ALTER TABLE vocabulary_units ADD COLUMN completed_at TEXT");
 const vocabularyEntryColumns = (db.prepare("PRAGMA table_info(vocabulary_entries)").all() as { name: string }[]).map(column => column.name);
 if (!vocabularyEntryColumns.includes("status")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN status TEXT NOT NULL DEFAULT 'learning' CHECK(status IN ('learning','consolidating','secure','out'))");
 if (!vocabularyEntryColumns.includes("seen_count")) db.exec("ALTER TABLE vocabulary_entries ADD COLUMN seen_count INTEGER NOT NULL DEFAULT 0");

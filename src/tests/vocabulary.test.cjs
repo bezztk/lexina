@@ -27,6 +27,22 @@ test("units contain separate vocabulary entries and delete them through the rela
   assert.deepEqual(db.pragma("foreign_key_check"),[]);
 });
 
+test("units expose active counts and persist their completion date",() => {
+  const unit = repo.saveVocabularyUnit(null,"Completion");
+  const first = repo.createVocabularyEntry({ unitId: unit.id,englishTerm: "done",germanTranslation: "fertig",germanExplanation: "" });
+  assert.equal(repo.getVocabularyUnit(unit.id).activeCount,1);
+  repo.takeVocabularyEntryOut(first.id);
+  const completed = repo.getVocabularyUnit(unit.id);
+  assert.equal(completed.activeCount,0);
+  assert.ok(completed.completedAt);
+  const second = repo.createVocabularyEntry({ unitId: unit.id,englishTerm: "open",germanTranslation: "offen",germanExplanation: "" });
+  assert.equal(repo.getVocabularyUnit(unit.id).completedAt,null);
+  repo.deleteVocabularyEntry(second.id);
+  assert.ok(repo.getVocabularyUnit(unit.id).completedAt);
+  repo.deleteVocabularyEntry(first.id);
+  assert.equal(repo.getVocabularyUnit(unit.id).completedAt,null);
+});
+
 test("training prioritizes unfinished cards, avoids immediate repeats, and persists reviews",() => {
   const unit = repo.saveVocabularyUnit(null,"Training");
   const makeEntry = englishTerm => repo.createVocabularyEntry({ unitId: unit.id,englishTerm,germanTranslation: englishTerm,germanExplanation: "" });

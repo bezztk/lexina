@@ -179,7 +179,34 @@
           <form id="vocabulary-import-form">
             <div class="modal-body vocabulary-import-body">
               <div class="prompt-heading"><strong>Prompt für ChatGPT</strong><button type="button" data-action="copy-vocabulary-prompt">Prompt kopieren</button></div>
-              <textarea id="vocabulary-import-prompt" class="prompt-text" rows="7" readonly>Analysiere die angehängten Seiten mit englischen Vokabeln. Erstelle für jede Vokabel eine Dreiergruppe in dieser festen Reihenfolge: englisches Wort, deutsche Übersetzung, deutsche Bedeutung beziehungsweise Erklärung. Übernimm die Angaben inhaltlich aus der Vorlage und erfinde keine zusätzlichen Vokabeln. Gib ausschließlich ein gültiges JSON-Array in folgendem Format zurück: [[&quot;to achieve&quot;,&quot;erreichen&quot;,&quot;ein bestimmtes Ziel erfolgreich verwirklichen&quot;],[&quot;reliable&quot;,&quot;zuverlässig&quot;,&quot;so vertrauenswürdig, dass man sich darauf verlassen kann&quot;]]. Verwende keine Markdown-Codeblöcke und keinen erklärenden Text außerhalb des JSON.</textarea>
+              <textarea id="vocabulary-import-prompt" class="prompt-text" rows="7" readonly>
+Analysiere ausschließlich die angehängten Seiten mit englischen Vokabeln und übernimm die Vokabeleinträge exakt aus dem Buch.
+
+Erstelle für jede Vokabel eine Dreiergruppe in dieser festen Reihenfolge:
+
+englisches Wort bzw. englischer Ausdruck
+deutsche Übersetzung
+englische Bedeutung, Definition, Synonymangabe oder Beispielsatz aus dem Buch
+
+Wichtig:
+
+Übernimm alle drei Angaben wortgetreu aus der Vorlage.
+Formuliere nichts selbst um.
+Übersetze keine englischen Bedeutungen ins Deutsche.
+Ergänze keine eigenen Erklärungen, Synonyme, Beispiele oder Vokabeln.
+Kürze nichts und erweitere nichts.
+Wenn bei einer Vokabel im Buch keine englische Bedeutung oder Definition steht, sondern nur ein Beispielsatz, übernimm genau diesen Beispielsatz.
+Wenn dort nur ein Synonym, Antonym oder eine kurze englische Angabe steht, übernimm genau diese.
+Behalte Angaben wie „sb“, „sth“, „e.g.“, „<>“, „pl“, „BE“, „AE“ usw. genau wie im Buch bei, sofern sie zum jeweiligen Eintrag gehören.
+Verwende ausschließlich die Vokabeln aus dem ausdrücklich genannten Bereich bzw. der genannten Unit.
+Behalte doppelte Einträge bei, wenn sie im Buch mehrfach mit unterschiedlicher Bedeutung oder Übersetzung vorkommen.
+Erfinde bei fehlenden oder unklaren Angaben nichts. Übernimm nur, was eindeutig in der Vorlage steht.
+
+Ausgabeformat:
+[["englisches Wort","deutsche Übersetzung","englische Bedeutung/Definition/Beispielsatz aus dem Buch"],["...","...","..."]]
+
+Gib ausschließlich ein gültiges JSON-Array zurück. Keine Markdown-Codeblöcke, keine Kommentare und keinen erklärenden Text außerhalb des JSON.
+              </textarea>
               <label>JSON einfügen<textarea name="json" rows="9" placeholder='[["to achieve","erreichen","ein Ziel erfolgreich verwirklichen"]]' required></textarea></label>
               <p id="vocabulary-import-error" class="editor-error" aria-live="polite" hidden></p>
             </div>
@@ -199,23 +226,23 @@
 
       <dialog id="vocabulary-training-dialog" aria-labelledby="vocabulary-training-title">
         <div class="modal-form vocabulary-training-form">
-          <header class="modal-header"><h2 id="vocabulary-training-title">Vokabeln trainieren</h2><button type="button" class="icon-button close-button" data-action="close-vocabulary-training" aria-label="Schließen">×</button></header>
+          <header class="modal-header"><h2 id="vocabulary-training-title">Vokabeln trainieren</h2><div class="modal-header-actions"><button type="button" class="training-out-button" data-action="take-vocabulary-out">Aus Übung nehmen</button><button type="button" class="icon-button close-button" data-action="close-vocabulary-training" aria-label="Schließen">×</button></div></header>
           <div class="modal-body vocabulary-training-body">
             <div id="vocabulary-training-summary" class="vocabulary-status-summary" aria-label="Lernstatus"></div>
             <div id="vocabulary-training-card" class="vocabulary-training-card">
               <span id="vocabulary-training-prompt-label" class="eyebrow"></span>
               <strong id="vocabulary-training-prompt"></strong>
               <div id="vocabulary-training-answer" class="vocabulary-training-answer" hidden></div>
+              <div id="vocabulary-training-stats" class="vocabulary-training-stats" aria-label="Lernstatistik"></div>
             </div>
             <p id="vocabulary-training-empty" class="empty" hidden>Alle Vokabeln wurden aus der Übung genommen.</p>
           </div>
           <footer class="modal-footer vocabulary-training-actions">
+            <button type="button" class="training-footer-out" data-action="take-vocabulary-out" hidden>Aus Übung nehmen</button>
             <button type="button" class="primary" data-action="reveal-vocabulary">Auflösen</button>
             <div data-training-review-actions hidden>
-              <button type="button" data-review-status="learning">Nochmal</button>
-              <button type="button" data-review-status="consolidating">Gewusst</button>
-              <button type="button" data-review-status="secure">Sicher</button>
-              <button type="button" data-review-status="out">Aus Übung</button>
+              <button type="button" data-review-result="missed">Nicht gewusst</button>
+              <button type="button" class="primary" data-review-result="known">Gewusst</button>
             </div>
           </footer>
         </div>

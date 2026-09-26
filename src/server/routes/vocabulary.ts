@@ -3,8 +3,8 @@ import type { Request,Response } from "express";
 import {
   createVocabularyEntry,deleteVocabularyEntry,deleteVocabularyUnit,
   importVocabularyEntries,listVocabularyEntries,listVocabularyUnits,reviewVocabularyEntry,
-  saveVocabularyUnit,selectNextVocabularyEntry,updateVocabularyEntry,VOCABULARY_STATUSES,
-  type VocabularyEntryInput,type VocabularyStatus,
+  saveVocabularyUnit,selectNextVocabularyEntry,takeVocabularyEntryOut,updateVocabularyEntry,
+  type VocabularyEntryInput,type VocabularyReviewResult,
 } from "../repositories/vocabulary-repository.js";
 
 export const vocabularyUnitsRouter = Router();
@@ -95,10 +95,16 @@ vocabularyEntriesRouter.delete("/:id",(request,response) => {
   const entryId = id(request.params.id);
   return entryId !== null && deleteVocabularyEntry(entryId) ? response.status(204).end() : response.status(404).json({ error: "Vokabel nicht gefunden." });
 });
-vocabularyEntriesRouter.post("/:id/review",(request,response) => {
+vocabularyEntriesRouter.post("/:id/review",safe((request,response) => {
   const entryId = id(request.params.id);
-  const status = request.body?.status;
-  if (entryId === null || !VOCABULARY_STATUSES.includes(status as VocabularyStatus)) return response.status(400).json({ error: "Ungültiger Lernstatus." });
-  const entry = reviewVocabularyEntry(entryId,status as VocabularyStatus);
+  const result = request.body?.result;
+  if (entryId === null || !["known","missed"].includes(result)) return response.status(400).json({ error: "Ungültiges Lernergebnis." });
+  const entry = reviewVocabularyEntry(entryId,result as VocabularyReviewResult);
   return entry ? response.json(entry) : response.status(404).json({ error: "Vokabel nicht gefunden." });
-});
+}));
+vocabularyEntriesRouter.post("/:id/out",safe((request,response) => {
+  const entryId = id(request.params.id);
+  if (entryId === null) return response.status(400).json({ error: "Ungültige Vokabel." });
+  const entry = takeVocabularyEntryOut(entryId);
+  return entry ? response.json(entry) : response.status(404).json({ error: "Vokabel nicht gefunden oder bereits aus der Übung." });
+}));

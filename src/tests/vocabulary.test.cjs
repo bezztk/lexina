@@ -27,7 +27,7 @@ test("units contain separate vocabulary entries and delete them through the rela
   assert.deepEqual(db.pragma("foreign_key_check"),[]);
 });
 
-test("training selects the highest weighted recency score and persists reviews",() => {
+test("training prioritizes unfinished cards, avoids immediate repeats, and persists reviews",() => {
   const unit = repo.saveVocabularyUnit(null,"Training");
   const makeEntry = englishTerm => repo.createVocabularyEntry({ unitId: unit.id,englishTerm,germanTranslation: englishTerm,germanExplanation: "" });
   const learning = makeEntry("learning");
@@ -35,32 +35,100 @@ test("training selects the highest weighted recency score and persists reviews",
   const secure = makeEntry("secure");
   const out = makeEntry("out");
   db.prepare("UPDATE vocabulary_units SET review_step=200 WHERE id=?").run(unit.id);
-  db.prepare("UPDATE vocabulary_entries SET status='learning',last_seen_step=180,seen_count=1 WHERE id=?").run(learning.id);
+  db.prepare("UPDATE vocabulary_entries SET status='learning',last_seen_step=200,seen_count=1 WHERE id=?").run(learning.id);
   db.prepare("UPDATE vocabulary_entries SET status='consolidating',last_seen_step=160,seen_count=1 WHERE id=?").run(consolidating.id);
   db.prepare("UPDATE vocabulary_entries SET status='secure',last_seen_step=100,seen_count=1 WHERE id=?").run(secure.id);
   db.prepare("UPDATE vocabulary_entries SET status='out',last_seen_step=1,seen_count=1 WHERE id=?").run(out.id);
+  const addReview = db.prepare("INSERT INTO vocabulary_reviews(entry_id,prompt_key,result,review_step) VALUES (?,'englishTerm','known',?)");
+  addReview.run(learning.id,180); addReview.run(consolidating.id,160); addReview.run(secure.id,100); addReview.run(out.id,1);
   const selected = repo.selectNextVocabularyEntry(unit.id);
-  assert.equal(selected.id,secure.id);
+  assert.equal(selected.id,consolidating.id);
   assert.equal(selected.lastSeenStep,201);
   assert.equal(selected.seenCount,2);
-  assert.equal(selected.lastPromptIndex,0);
-  assert.equal(repo.reviewVocabularyEntry(secure.id,"consolidating").status,"consolidating");
+  assert.equal(selected.lastPromptIndex,1);
+  assert.equal(repo.reviewVocabularyEntry(consolidating.id,"known").status,"consolidating");
+  assert.deepEqual(repo.getVocabularyEntry(consolidating.id).reviewStats.directions.germanTranslation,{
+    attempts: 1,correct: 1,correctStreak: 1,missedStreak: 0,lastResult: "known",lastReviewedStep: 201,
+  });
+  assert.equal(repo.selectNextVocabularyEntry(unit.id).id,learning.id);
+  db.prepare("UPDATE vocabulary_entries SET status='secure' WHERE id IN (?,?)").run(learning.id,consolidating.id);
+  assert.equal(repo.selectNextVocabularyEntry(unit.id).id,secure.id);
   const counts = repo.getVocabularyUnit(unit.id);
-  assert.deepEqual([counts.learningCount,counts.consolidatingCount,counts.secureCount,counts.outCount],[1,2,0,1]);
+  assert.deepEqual([counts.learningCount,counts.consolidatingCount,counts.secureCount,counts.outCount],[0,0,3,1]);
 });
 
-test("training rotates the prompted side for each vocabulary entry",() => {
+test("training learns both core directions, derives counts, and reacts to repeated misses",() => {
   const unit = repo.saveVocabularyUnit(null,"Prompt rotation");
   const entry = repo.createVocabularyEntry({
     unitId: unit.id,englishTerm: "reliable",germanTranslation: "zuverlässig",germanExplanation: "verlässlich",
   });
+  const review = result => {
+    const selected = repo.selectNextVocabularyEntry(unit.id);
+    return { prompt: selected.lastPromptIndex,entry: repo.reviewVocabularyEntry(entry.id,result) };
+  };
+  const first = review("known");
+  assert.equal(first.prompt,0);
+  assert.equal(first.entry.status,"learning");
+  const introduced = review("known");
+  assert.equal(introduced.prompt,1);
+  assert.equal(introduced.entry.status,"consolidating");
+  assert.equal(review("known").prompt,2);
+  assert.equal(review("known").prompt,0);
+  const secure = review("known");
+  assert.equal(secure.prompt,1);
+  assert.equal(secure.entry.status,"secure");
+  const firstMiss = review("missed");
+  assert.equal(firstMiss.entry.status,"secure");
+  const secondMiss = review("missed");
+  assert.equal(secondMiss.prompt,firstMiss.prompt);
+  assert.equal(secondMiss.entry.status,"consolidating");
+  assert.equal(secondMiss.entry.reviewStats.total,7);
+  assert.equal(secondMiss.entry.reviewStats.correct,5);
+  assert.equal(secondMiss.entry.reviewStats.directions.englishTerm.attempts
+    + secondMiss.entry.reviewStats.directions.germanTranslation.attempts
+    + secondMiss.entry.reviewStats.directions.germanExplanation.attempts,7);
+  assert.equal(repo.takeVocabularyEntryOut(entry.id).status,"out");
+  assert.equal(repo.selectNextVocabularyEntry(unit.id),null);
+});
+
+test("learning excludes the meaning prompt and uses fixed milestones when no meaning exists",() => {
+  const unit = repo.saveVocabularyUnit(null,"Core directions");
+  const entry = repo.createVocabularyEntry({
+    unitId: unit.id,englishTerm: "careful",germanTranslation: "vorsichtig",germanExplanation: "",
+  });
+  const review = () => {
+    const selected = repo.selectNextVocabularyEntry(unit.id);
+    assert.notEqual(selected.lastPromptIndex,2);
+    return repo.reviewVocabularyEntry(entry.id,"known");
+  };
+  assert.equal(review().status,"learning");
+  assert.equal(review().status,"consolidating");
+  assert.equal(review().status,"consolidating");
+  assert.equal(review().status,"secure");
   assert.deepEqual([
-    repo.selectNextVocabularyEntry(unit.id).lastPromptIndex,
-    repo.selectNextVocabularyEntry(unit.id).lastPromptIndex,
-    repo.selectNextVocabularyEntry(unit.id).lastPromptIndex,
-    repo.selectNextVocabularyEntry(unit.id).lastPromptIndex,
-  ],[0,1,2,0]);
-  assert.equal(repo.getVocabularyEntry(entry.id).seenCount,4);
+    repo.getVocabularyEntry(entry.id).reviewStats.directions.englishTerm.correct,
+    repo.getVocabularyEntry(entry.id).reviewStats.directions.germanTranslation.correct,
+    repo.getVocabularyEntry(entry.id).reviewStats.directions.germanExplanation.attempts,
+  ],[2,2,0]);
+});
+
+test("consolidating only asks directions whose learning target is still open",() => {
+  const unit = repo.saveVocabularyUnit(null,"Open directions");
+  const entry = repo.createVocabularyEntry({
+    unitId: unit.id,englishTerm: "thoughtful",germanTranslation: "aufmerksam",germanExplanation: "rücksichtsvoll",
+  });
+  db.prepare("UPDATE vocabulary_units SET review_step=4 WHERE id=?").run(unit.id);
+  db.prepare("UPDATE vocabulary_entries SET status='consolidating',last_seen_step=4,seen_count=4 WHERE id=?").run(entry.id);
+  const addReview = db.prepare("INSERT INTO vocabulary_reviews(entry_id,prompt_key,result,review_step) VALUES (?,?,?,?)");
+  addReview.run(entry.id,"englishTerm","known",1);
+  addReview.run(entry.id,"germanTranslation","known",2);
+  addReview.run(entry.id,"germanTranslation","known",3);
+  const meaning = repo.selectNextVocabularyEntry(unit.id);
+  assert.equal(meaning.lastPromptIndex,2);
+  assert.equal(repo.reviewVocabularyEntry(entry.id,"known").status,"consolidating");
+  const english = repo.selectNextVocabularyEntry(unit.id);
+  assert.equal(english.lastPromptIndex,0);
+  assert.equal(repo.reviewVocabularyEntry(entry.id,"known").status,"secure");
 });
 
 test("vocabulary HTTP endpoints validate and persist units and entries",async () => {
@@ -101,7 +169,23 @@ test("vocabulary HTTP endpoints validate and persist units and entries",async ()
     ]);
     assert.equal(imported.status,201);
     assert.equal(imported.data.imported,2);
-    assert.equal((await request(`/api/vocabulary-units/${unit.data.id}/entries`)).data.length,2);
+    const entries = (await request(`/api/vocabulary-units/${unit.data.id}/entries`)).data;
+    assert.equal(entries.length,2);
+    assert.deepEqual(entries[0].reviewStats,{ total: 0,correct: 0,lastResult: null,directions: {
+      englishTerm: { attempts: 0,correct: 0,correctStreak: 0,missedStreak: 0,lastResult: null,lastReviewedStep: null },
+      germanTranslation: { attempts: 0,correct: 0,correctStreak: 0,missedStreak: 0,lastResult: null,lastReviewedStep: null },
+      germanExplanation: { attempts: 0,correct: 0,correctStreak: 0,missedStreak: 0,lastResult: null,lastReviewedStep: null },
+    } });
+    const next = await request(`/api/vocabulary-units/${unit.data.id}/next`,"POST");
+    assert.equal(next.status,200);
+    assert.equal((await request(`/api/vocabulary-entries/${next.data.id}/review`,"POST",{ result: "wrong" })).status,400);
+    const reviewed = await request(`/api/vocabulary-entries/${next.data.id}/review`,"POST",{ result: "known" });
+    assert.equal(reviewed.status,200);
+    assert.equal(reviewed.data.status,"learning");
+    assert.equal(reviewed.data.reviewStats.total,1);
+    const takenOut = await request(`/api/vocabulary-entries/${next.data.id}/out`,"POST");
+    assert.equal(takenOut.status,200);
+    assert.equal(takenOut.data.status,"out");
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
 

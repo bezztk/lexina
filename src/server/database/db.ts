@@ -148,6 +148,18 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_vocabulary_entries_unit ON vocabulary_entries(unit_id,created_at,id);
+
+  CREATE TABLE IF NOT EXISTS vocabulary_reviews (
+    id INTEGER PRIMARY KEY,
+    entry_id INTEGER NOT NULL REFERENCES vocabulary_entries(id) ON DELETE CASCADE,
+    prompt_key TEXT NOT NULL CHECK(prompt_key IN ('englishTerm','germanTranslation','germanExplanation')),
+    result TEXT NOT NULL CHECK(result IN ('known','missed')),
+    review_step INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    UNIQUE(entry_id,review_step)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_vocabulary_reviews_entry ON vocabulary_reviews(entry_id,review_step,id);
 `);
 
 const vocabularyUnitColumns = (db.prepare("PRAGMA table_info(vocabulary_units)").all() as { name: string }[]).map(column => column.name);

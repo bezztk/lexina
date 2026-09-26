@@ -777,6 +777,8 @@ blockquote {
 .vocabulary-entry-content strong { color: #626438; font-size: 0.95rem; }
 .vocabulary-entry-content span { color: #493a2c; font-weight: 650; }
 .vocabulary-entry-content small { min-width: 0; overflow-wrap: anywhere; color: #756550; font-size: 0.8rem; }
+.vocabulary-entry-progress { display: grid; justify-items: end; gap: 0.12rem; }
+.vocabulary-entry-progress small { font-size: 0.68rem; font-weight: 500; white-space: nowrap; }
 .vocabulary-status { color: #756550; font-size: 0.72rem; font-style: normal; font-weight: 650; text-align: right; white-space: nowrap; }
 .vocabulary-status-learning, .vocabulary-summary-learning { color: #a05a27; }
 .vocabulary-status-consolidating, .vocabulary-summary-consolidating { color: #77763f; }
@@ -793,6 +795,18 @@ blockquote {
 .vocabulary-training-answer div { display: grid; gap: 0.08rem; }
 .vocabulary-training-answer span { color: #756550; font-size: 0.72rem; text-transform: uppercase; }
 .vocabulary-training-answer strong { color: #493a2c; font-size: 1.05rem; }
+.training-out-button { min-height: 1.9rem; padding: 0.3rem 0.55rem; border-color: #bd8f82; color: #8e4535; font-size: 0.76rem; }
+.training-footer-out { margin-right: auto; border-color: #bd8f82; color: #8e4535; }
+.vocabulary-training-stats { display: grid; gap: 0.45rem; margin-top: 0.55rem; padding-top: 0.65rem; border-top: 1px solid rgba(195,177,149,0.72); color: #756550; font-size: 0.72rem; }
+.vocabulary-training-total { white-space: nowrap; }
+.vocabulary-training-goal { display: grid; gap: 0.08rem; color: #493a2c; }
+.vocabulary-training-goal small { color: #756550; font-size: 0.7rem; }
+.vocabulary-training-goal-complete strong { color: #347046; }
+.vocabulary-direction-stats { display: flex; justify-content: center; gap: 0.35rem; flex-wrap: wrap; }
+.vocabulary-direction-stats > span { padding: 0.16rem 0.35rem; border: 1px solid rgba(195,177,149,0.8); background: rgba(255,255,255,0.45); white-space: nowrap; }
+.vocabulary-direction-stats > .progress-empty { border-color: #c98f83; background: #fff0ed; color: #8d3529; }
+.vocabulary-direction-stats > .progress-partial { border-color: #c8a85a; background: #fff7da; color: #765d17; }
+.vocabulary-direction-stats > .progress-complete { border-color: #83ad8a; background: #edf8ef; color: #32623b; }
 .vocabulary-training-actions { display: flex; justify-content: flex-end; }
 [data-training-review-actions] { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem; }
 [data-training-review-actions] button.current { border-color: #898b58; background: rgba(125,129,70,0.2); color: #595b31; box-shadow: inset 0 0 0 1px rgba(125,129,70,0.08); }

@@ -36,14 +36,14 @@ export function parseInput(body: unknown): WordInput | null {
     || (data.meaningSpaceId != null && data.meaningSpaceId !== "" && (meaningSpaceId === null || typeof data.meaningSpaceId !== "number")) || !tags || !personal) return null;
   return {
     term,status: status as WordStatus,meaning: text(data.meaning),
-    exampleSentence: text(data.exampleSentence),englishTranslation: text(data.englishTranslation),
+    exampleSentence: text(data.exampleSentence),replaces: text(data.replaces),englishTranslation: text(data.englishTranslation),
     englishExampleSentence: text(data.englishExampleSentence),meaningSpaceId,tags,...personal,
   };
 }
 function importWordInput(value: unknown,label: string): { input: WordInput | null;error: string | null } {
   if (!value || typeof value !== "object" || Array.isArray(value)) return { input: null,error: `${label} ist ungültig.` };
   const data = value as Record<string,unknown>;
-  const stringFields = ["meaning","exampleSentence","englishTranslation","englishExampleSentence"] as const;
+  const stringFields = ["meaning","exampleSentence","replaces","englishTranslation","englishExampleSentence"] as const;
   const invalidField = stringFields.find(field => data[field] !== undefined && typeof data[field] !== "string");
   if (invalidField) return { input: null,error: `${label}: Das Feld „${invalidField}“ muss Text enthalten.` };
   const tags = textList(data.tags);
@@ -55,7 +55,7 @@ function importWordInput(value: unknown,label: string): { input: WordInput | nul
   if (!personal) return { input: null,error: `${label}: Die persönliche Einordnung ist ungültig oder unvollständig.` };
   return { input: {
     term: text(data.term),status: (data.status ?? "draft") as WordStatus,meaning: text(data.meaning),
-    exampleSentence: text(data.exampleSentence),englishTranslation: text(data.englishTranslation),
+    exampleSentence: text(data.exampleSentence),replaces: text(data.replaces),englishTranslation: text(data.englishTranslation),
     englishExampleSentence: text(data.englishExampleSentence),meaningSpaceId: null,tags,...personal,
   },error: null };
 }

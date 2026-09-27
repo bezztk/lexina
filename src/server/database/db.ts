@@ -30,8 +30,10 @@ if (wordTable && !wordColumns.includes("personal_status"))
   db.exec("ALTER TABLE word_units ADD COLUMN personal_status TEXT NOT NULL DEFAULT 'unclassified' CHECK(personal_status IN ('unclassified','describes_me','develop','reduce','replace','boundary'))");
 if (wordTable && !wordColumns.includes("personal_strength"))
   db.exec("ALTER TABLE word_units ADD COLUMN personal_strength TEXT CHECK(personal_strength IS NULL OR personal_strength IN ('partial','clear','strong'))");
+if (wordTable && !wordColumns.includes("replaces_text"))
+  db.exec("ALTER TABLE word_units ADD COLUMN replaces_text TEXT NOT NULL DEFAULT ''");
 if (wordTable) wordColumns = (db.prepare("PRAGMA table_info(word_units)").all() as { name: string }[]).map(column => column.name);
-const currentWordColumns = ["id","term","meaning","status","example_sentence","english_translation","english_example_sentence","meaning_space_id","personal_status","personal_strength","created_at"];
+const currentWordColumns = ["id","term","meaning","status","example_sentence","english_translation","english_example_sentence","meaning_space_id","personal_status","personal_strength","replaces_text","created_at"];
 if (wordTable && (wordColumns.length !== currentWordColumns.length || currentWordColumns.some(column => !wordColumns.includes(column)))) {
   db.exec(`
     DROP TABLE IF EXISTS word_tags;
@@ -80,6 +82,7 @@ db.exec(`
     meaning_space_id INTEGER REFERENCES meaning_spaces(id) ON DELETE SET NULL,
     personal_status TEXT NOT NULL DEFAULT 'unclassified' CHECK(personal_status IN ('unclassified','describes_me','develop','reduce','replace','boundary')),
     personal_strength TEXT CHECK(personal_strength IS NULL OR personal_strength IN ('partial','clear','strong')),
+    replaces_text TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
 

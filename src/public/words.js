@@ -23,7 +23,7 @@ async function loadWords() {
 function matchesWord(word) {
   const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();
   const status = document.querySelector("#word-status-filter").value;
-  const haystack = [word.term,word.meaning,word.englishTranslation].join(" ").toLocaleLowerCase();
+  const haystack = [word.term,word.meaning,word.replaces,word.englishTranslation].join(" ").toLocaleLowerCase();
   return (!query || haystack.includes(query)) && (!status || word.status === status) && (!selectedWordTag || word.tags.includes(selectedWordTag));
 }
 function renderWordTagFilter() {
@@ -55,6 +55,7 @@ function wordCard(word,grouped = false) {
   return '<article class="' + (grouped ? 'grouped-word-row' : 'card word-card inventory-card') + '"><div class="card-main"><div class="word-summary"><div class="word-title-line"><h3><button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button></h3>' +
     (word.meaning ? '<span class="word-separator">—</span><span class="inline-word-meaning">' + escapeHtml(word.meaning) + '</span>' : '') + '</div>' +
     (meta ? '<div class="word-card-meta">' + meta + '</div>' : '') + '</div>' +
+    (word.replaces ? '<p class="word-detail-line"><span class="detail-label">Ersetzt:</span><span>' + escapeHtml(word.replaces) + '</span></p>' : '') +
     (word.exampleSentence ? '<p class="word-detail-line"><span class="detail-label">Beispiel:</span><span>' + escapeHtml(word.exampleSentence) + '</span></p>' : '') +
     (englishContent ? '<p class="word-detail-line"><span class="detail-label">Englisch:</span><span>' + englishContent + '</span></p>' : '') +
     "</div></article>";
@@ -65,9 +66,12 @@ function renderWords() {
   const filtersActive = query || document.querySelector("#word-status-filter").value || selectedWordTag;
   const wordGroups = state.spaces.map(space => ({ space,words: words.filter(word => word.meaningSpaceId === space.id) })).filter(group => group.words.length);
   const unassigned = words.filter(word => word.meaningSpaceId === null);
-  document.querySelector("#word-list").innerHTML = wordGroups.map(({ space,words: groupWords }) =>
+  const unassignedGroup = unassigned.length
+    ? '<article class="meaning-word-group"><header class="meaning-group-header"><strong>Ohne Bedeutung</strong></header><div class="meaning-group-words">' + unassigned.map(word => wordCard(word,true)).join("") + "</div></article>"
+    : "";
+  document.querySelector("#word-list").innerHTML = unassignedGroup + wordGroups.map(({ space,words: groupWords }) =>
     '<article class="meaning-word-group"><header class="meaning-group-header"><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button><p>' + escapeHtml(space.explanation) + '</p></header><div class="meaning-group-words">' + groupWords.map(word => wordCard(word,true)).join("") + "</div></article>"
-  ).join("") + unassigned.map(word => wordCard(word)).join("") || empty("Keine Wörter für diese Suche.");
+  ).join("") || empty("Keine Wörter für diese Suche.");
   const spaces = state.spaces.filter(space => !filtersActive || space.wordIds.some(id => words.some(word => word.id === id)));
   document.querySelector("#space-list").innerHTML = spaces.map(space => {
     const assignedWords = space.wordIds.map(id => words.find(word => word.id === id)).filter(Boolean);
@@ -103,7 +107,7 @@ function openWordSpacePicker() {
 }
 function openWordForm(word) {
   document.querySelector("#word-dialog-title").textContent = word ? "Wort bearbeiten" : "Wort hinzufügen";
-  for (const key of ["id","term","status","personalStatus","meaning","exampleSentence","englishTranslation","englishExampleSentence"])
+  for (const key of ["id","term","status","personalStatus","meaning","exampleSentence","replaces","englishTranslation","englishExampleSentence"])
     wordForm.elements[key].value = word?.[key] ?? (key === "status" ? "draft" : key === "personalStatus" ? "unclassified" : "");
   wordForm.querySelectorAll('input[name="personalStrength"]').forEach(input => { input.checked = input.value === word?.personalStrength; });
   updatePersonalStrengthVisibility();

@@ -25,23 +25,24 @@ const repo = require("../dist/server/repositories/word-repository.js");
 const { db } = require("../dist/server/database/db.js");
 const input = (term,extras = {}) => ({
   term,meaning: "",status: "draft",exampleSentence: "",
-  englishTranslation: "",englishExampleSentence: "",meaningSpaceId: null,
+  replaces: "",englishTranslation: "",englishExampleSentence: "",meaningSpaceId: null,
   personalStatus: "unclassified",personalStrength: null,tags: [],...extras,
 });
 
-test("personal fields migrate additively without losing existing words",() => {
+test("optional word fields migrate additively without losing existing words",() => {
   const legacyWord = repo.listWords().find(word => word.term === "Bestandswort");
   assert.ok(legacyWord);
   assert.equal(legacyWord.personalStatus,"unclassified");
   assert.equal(legacyWord.personalStrength,null);
+  assert.equal(legacyWord.replaces,"");
   assert.equal(repo.deleteWord(legacyWord.id),true);
 });
 
-test("word schema stores one German example and one English translation pair directly",() => {
+test("word schema stores optional word details directly",() => {
   const columns = db.prepare("PRAGMA table_info(word_units)").all().map(column => column.name);
   assert.deepEqual(columns.toSorted(),[
     "id","term","meaning","status","example_sentence",
-    "english_translation","english_example_sentence","meaning_space_id","personal_status","personal_strength","created_at",
+    "english_translation","english_example_sentence","meaning_space_id","personal_status","personal_strength","replaces_text","created_at",
   ].toSorted());
   for (const table of ["unit_examples","translations","space_words","words","similar_words","example_sentences"]) {
     assert.equal(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table),undefined);
@@ -49,16 +50,19 @@ test("word schema stores one German example and one English translation pair dir
 
   const word = repo.createWord(input("behutsam",{
     exampleSentence: "Sie öffnete die Tür behutsam.",
+    replaces: "vorsichtig, langsam",
     englishTranslation: "carefully",
     englishExampleSentence: "She opened the door carefully.",
   }));
   assert.equal(word.exampleSentence,"Sie öffnete die Tür behutsam.");
+  assert.equal(word.replaces,"vorsichtig, langsam");
   assert.equal(word.englishTranslation,"carefully");
   assert.equal(word.englishExampleSentence,"She opened the door carefully.");
 
-  const row = db.prepare("SELECT example_sentence,english_translation,english_example_sentence FROM word_units WHERE id=?").get(word.id);
+  const row = db.prepare("SELECT example_sentence,replaces_text,english_translation,english_example_sentence FROM word_units WHERE id=?").get(word.id);
   assert.deepEqual(row,{
     example_sentence: "Sie öffnete die Tür behutsam.",
+    replaces_text: "vorsichtig, langsam",
     english_translation: "carefully",
     english_example_sentence: "She opened the door carefully.",
   });
@@ -124,12 +128,14 @@ test("HTTP validates and persists the simplified word shape alongside other cont
     assert.equal(space.data.explanation,"Wörter für Geschwindigkeit");
     const created = await request("/api/words","POST",{
       term: "schnell",status: "draft",meaning: "mit hohem Tempo",exampleSentence: "Er läuft schnell.",
+      replaces: "rasch, zügig",
       englishTranslation: "fast",englishExampleSentence: "He runs fast.",meaningSpaceId: space.data.id,tags: ["Test"],
       personalStatus: "describes_me",personalStrength: "strong",
     });
     assert.equal(created.status,201);
     assert.equal(created.data.englishTranslation,"fast");
     assert.equal(created.data.exampleSentence,"Er läuft schnell.");
+    assert.equal(created.data.replaces,"rasch, zügig");
     assert.equal(created.data.meaningSpaceId,space.data.id);
     assert.equal(created.data.personalStatus,"describes_me");
     assert.equal(created.data.personalStrength,"strong");
@@ -162,6 +168,7 @@ test("HTTP validates and persists the simplified word shape alongside other cont
         label: "Bewegung",explanation: "Arten der Fortbewegung",
         words: [{
           term: "flanieren",meaning: "gemächlich gehen",status: "learning",
+          replaces: "langsam gehen",
           exampleSentence: "Wir schlendern durch den Park.",englishTranslation: "to stroll",
           englishExampleSentence: "We stroll through the park.",tags: ["Verb"],
         }],
@@ -175,6 +182,7 @@ test("HTTP validates and persists the simplified word shape alongside other cont
     const strollImport = importedWords.find(item => item.term === "flanieren");
     assert.equal(strollImport.meaningSpaceId,importedSpace.id);
     assert.equal(strollImport.englishTranslation,"to stroll");
+    assert.equal(strollImport.replaces,"langsam gehen");
     assert.deepEqual(strollImport.tags,["Verb"]);
     assert.equal(importedWords.find(item => item.term === "behutsam").meaningSpaceId,null);
     assert.ok((await request("/api/tags")).data.some(item => item.name === "Adverb"));

@@ -64,6 +64,7 @@
                   <label><input type="radio" name="personalStrength" value="strong" /><span>Stark</span></label>
                 </div>
               </div>
+              <label>Ersetzt<input name="replaces" placeholder="z. B. schauen, achten" /></label>
             </fieldset>
             <fieldset><legend>Tags</legend><div id="word-tags" class="tag-options"></div></fieldset>
             <fieldset class="language-section"><legend>Englisch</legend>
@@ -81,7 +82,7 @@
           <header class="modal-header"><h2 id="word-import-dialog-title">Wörter importieren</h2><button type="button" class="icon-button close-button" data-action="close-word-import" aria-label="Schließen">×</button></header>
           <div class="modal-body word-import-body">
             <div class="prompt-heading"><strong>Prompt für ChatGPT</strong><button type="button" data-action="copy-word-prompt">Prompt kopieren</button></div>
-            <textarea id="word-import-prompt" class="prompt-text" rows="9" readonly>Erstelle aus meiner Vorlage ausschließlich ein gültiges JSON-Objekt für den Wörter-Import. Gruppierte Wörter stehen unter „meanings“ als {"label":"Bezeichnung","explanation":"Erklärung","words":[...]}; Wörter ohne übergeordnete Bedeutung stehen unter „words“. Jedes Wort hat zwingend „term“ und optional „meaning“, „status“ (draft, learning oder ready), „exampleSentence“, „englishTranslation“, „englishExampleSentence“ und „tags“ als Textliste. Format: {"meanings":[{"label":"Bewegung","explanation":"Arten der Fortbewegung","words":[{"term":"schlendern","meaning":"gemächlich gehen","status":"learning","exampleSentence":"Wir schlendern durch den Park.","englishTranslation":"to stroll","englishExampleSentence":"We stroll through the park.","tags":["Verb"]}]}],"words":[{"term":"behutsam","meaning":"vorsichtig","tags":["Adverb"]}]}. Verwende keine Markdown-Codeblöcke und keinen Text außerhalb des JSON.</textarea>
+            <textarea id="word-import-prompt" class="prompt-text" rows="9" readonly>Erstelle aus meiner Vorlage ausschließlich ein gültiges JSON-Objekt für den Wörter-Import. Gruppierte Wörter stehen unter „meanings“ als {"label":"Bezeichnung","explanation":"Erklärung","words":[...]}; Wörter ohne übergeordnete Bedeutung stehen unter „words“. Jedes Wort hat zwingend „term“ und optional „meaning“, „status“ (draft, learning oder ready), „exampleSentence“, „replaces“ als Freitext, „englishTranslation“, „englishExampleSentence“ und „tags“ als Textliste. Format: {"meanings":[{"label":"Bewegung","explanation":"Arten der Fortbewegung","words":[{"term":"schlendern","meaning":"gemächlich gehen","status":"learning","exampleSentence":"Wir schlendern durch den Park.","replaces":"langsam gehen","englishTranslation":"to stroll","englishExampleSentence":"We stroll through the park.","tags":["Verb"]}]}],"words":[{"term":"behutsam","meaning":"vorsichtig","tags":["Adverb"]}]}. Verwende keine Markdown-Codeblöcke und keinen Text außerhalb des JSON.</textarea>
             <label>JSON einfügen<textarea name="json" rows="11" placeholder='{"meanings":[],"words":[{"term":"behutsam"}]}' required></textarea></label>
             <p id="word-import-error" class="editor-error" aria-live="polite" hidden></p>
           </div>

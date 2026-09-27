@@ -1,4 +1,6 @@
 const statusNames = { draft: "Entwurf", learning: "Lernen", ready: "Abgeschlossen" };
+const personalStatusNames = { unclassified: "Nicht eingeordnet",describes_me: "Beschreibt mich",develop: "Möchte ich entwickeln",reduce: "Möchte ich reduzieren",replace: "Möchte ich ersetzen",boundary: "Abgrenzung" };
+const personalStrengthNames = { partial: "Teilweise",clear: "Deutlich",strong: "Stark" };
 let selectedSpaceId = null;
 let selectedWordTag = "";
 const spaceDialog = () => document.querySelector("#space-dialog");
@@ -38,13 +40,17 @@ function renderWordTagFilter() {
 function statusBadge(word) {
   return word.status === "ready" ? "" : '<span class="inventory-status status-' + word.status + '">' + statusNames[word.status] + '</span>';
 }
+function personalStatusBadge(word) {
+  const strength = word.personalStrength ? '<small>' + personalStrengthNames[word.personalStrength] + '</small>' : "";
+  return '<span class="personal-status-badge personal-status-' + word.personalStatus + '"><small>Für mich</small><strong>' + personalStatusNames[word.personalStatus] + '</strong>' + strength + '</span>';
+}
 function wordCard(word,grouped = false) {
   const englishContent = [
     word.englishTranslation ? '<span class="english-translation">' + escapeHtml(word.englishTranslation) + '</span>' : "",
     word.englishExampleSentence ? '<span>' + escapeHtml(word.englishExampleSentence) + '</span>' : ""
   ].filter(Boolean).join(' <span class="word-separator">·</span> ');
   const tags = word.tags.length ? '<div class="tags word-card-tags">' + word.tags.map(tag => '<span>' + escapeHtml(tag) + '</span>').join("") + '</div>' : "";
-  const meta = tags + statusBadge(word);
+  const meta = personalStatusBadge(word) + tags + statusBadge(word);
   return '<article class="' + (grouped ? 'grouped-word-row' : 'card word-card inventory-card') + '"><div class="card-main"><div class="word-summary"><div class="word-title-line"><h3><button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button></h3>' +
     (word.meaning ? '<span class="word-separator">—</span><span class="inline-word-meaning">' + escapeHtml(word.meaning) + '</span>' : '') + '</div>' +
     (meta ? '<div class="word-card-meta">' + meta + '</div>' : '') + '</div>' +
@@ -76,6 +82,15 @@ function updateWordSpaceAction() {
   document.querySelector('[data-action="choose-word-space"]').textContent = selectedSpaceId === null ? "Bedeutung hinzufügen" : "Bedeutung ändern";
   document.querySelector('[data-action="clear-word-space"]').hidden = selectedSpaceId === null;
 }
+function updatePersonalStrengthVisibility() {
+  const strengthSection = document.querySelector("#word-personal-strength");
+  const relevant = wordForm.elements.personalStatus.value === "describes_me";
+  strengthSection.hidden = !relevant;
+  strengthSection.querySelectorAll('input[name="personalStrength"]').forEach(input => {
+    input.required = relevant;
+    if (!relevant) input.checked = false;
+  });
+}
 function openWordSpacePicker() {
   document.querySelector("#word-space-search").value = "";
   renderSpaceOptions();
@@ -84,8 +99,10 @@ function openWordSpacePicker() {
 }
 function openWordForm(word) {
   document.querySelector("#word-dialog-title").textContent = word ? "Wort bearbeiten" : "Wort hinzufügen";
-  for (const key of ["id","term","status","meaning","exampleSentence","englishTranslation","englishExampleSentence"])
-    wordForm.elements[key].value = word?.[key] ?? (key === "status" ? "draft" : "");
+  for (const key of ["id","term","status","personalStatus","meaning","exampleSentence","englishTranslation","englishExampleSentence"])
+    wordForm.elements[key].value = word?.[key] ?? (key === "status" ? "draft" : key === "personalStatus" ? "unclassified" : "");
+  wordForm.querySelectorAll('input[name="personalStrength"]').forEach(input => { input.checked = input.value === word?.personalStrength; });
+  updatePersonalStrengthVisibility();
   selectedSpaceId = word?.meaningSpaceId ?? null;
   updateWordSpaceAction();
   renderTagOptions("#word-tags",word?.tags || []);
@@ -138,6 +155,7 @@ function openSpaceForm(space) {
   form.elements.label.focus();
 }
 function initWordArea() {
+  wordForm.elements.personalStatus.addEventListener("change",updatePersonalStrengthVisibility);
   document.querySelector("#word-search").addEventListener("input",renderWords);
   document.querySelector("#word-status-filter").addEventListener("change",renderWords);
   document.querySelector("#word-tag-filter").addEventListener("change",event => {

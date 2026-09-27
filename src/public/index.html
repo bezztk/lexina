@@ -51,9 +51,21 @@
               <label>Wort<input name="term" required /></label>
               <label>Status<select name="status"><option value="draft">Entwurf</option><option value="learning">Lernen</option><option value="ready">Abgeschlossen</option></select></label>
             </div>
-            <fieldset><legend>Tags</legend><div id="word-tags" class="tag-options"></div></fieldset>
             <label>Konkrete Bedeutung<input name="meaning" /></label>
             <label>Deutscher Beispielsatz<input name="exampleSentence" /></label>
+            <fieldset class="personal-word-section">
+              <legend>Für mich</legend>
+              <label>Persönlicher Status<select name="personalStatus"><option value="unclassified">Nicht eingeordnet</option><option value="describes_me">Beschreibt mich</option><option value="develop">Möchte ich entwickeln</option><option value="reduce">Möchte ich reduzieren</option><option value="replace">Möchte ich ersetzen</option><option value="boundary">Abgrenzung</option></select></label>
+              <div id="word-personal-strength" hidden>
+                <span>Ausprägung</span>
+                <div class="personal-strength-options">
+                  <label><input type="radio" name="personalStrength" value="partial" /><span>Teilweise</span></label>
+                  <label><input type="radio" name="personalStrength" value="clear" /><span>Deutlich</span></label>
+                  <label><input type="radio" name="personalStrength" value="strong" /><span>Stark</span></label>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset><legend>Tags</legend><div id="word-tags" class="tag-options"></div></fieldset>
             <fieldset class="language-section"><legend>Englisch</legend>
               <label>Übersetzung<input name="englishTranslation" /></label>
               <label>Beispielsatz<input name="englishExampleSentence" /></label>

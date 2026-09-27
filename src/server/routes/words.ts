@@ -1,9 +1,9 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import {
-  WORD_STATUSES, createWord, deleteWord, importWords, listWords, updateWord,
+  PERSONAL_STATUSES,PERSONAL_STRENGTHS,WORD_STATUSES,createWord,deleteWord,importWords,listWords,updateWord,
   listSpaces, saveSpace, deleteSpace,
-  type WordImportInput, type WordInput, type WordStatus,
+  type PersonalStatus,type PersonalStrength,type WordImportInput,type WordInput,type WordStatus,
 } from "../repositories/word-repository.js";
 export const wordsRouter = Router();
 export const spacesRouter = Router();
@@ -17,6 +17,13 @@ function textList(value: unknown): string[] | null {
   if (value === undefined) return [];
   return Array.isArray(value) && value.every(v => typeof v === "string") ? value.map(v => v.trim()).filter(Boolean) : null;
 }
+function personalInput(data: Record<string,unknown>): { personalStatus: PersonalStatus;personalStrength: PersonalStrength | null } | null {
+  const personalStatus = data.personalStatus ?? "unclassified";
+  if (!PERSONAL_STATUSES.includes(personalStatus as PersonalStatus)) return null;
+  if (personalStatus !== "describes_me") return { personalStatus: personalStatus as PersonalStatus,personalStrength: null };
+  if (!PERSONAL_STRENGTHS.includes(data.personalStrength as PersonalStrength)) return null;
+  return { personalStatus: personalStatus as PersonalStatus,personalStrength: data.personalStrength as PersonalStrength };
+}
 export function parseInput(body: unknown): WordInput | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   const data = body as Record<string, unknown>;
@@ -24,12 +31,13 @@ export function parseInput(body: unknown): WordInput | null {
   const status = data.status ?? "draft";
   const meaningSpaceId = data.meaningSpaceId == null || data.meaningSpaceId === "" ? null : id(data.meaningSpaceId);
   const tags = textList(data.tags);
+  const personal = personalInput(data);
   if (!term || !WORD_STATUSES.includes(status as WordStatus)
-    || (data.meaningSpaceId != null && data.meaningSpaceId !== "" && (meaningSpaceId === null || typeof data.meaningSpaceId !== "number")) || !tags) return null;
+    || (data.meaningSpaceId != null && data.meaningSpaceId !== "" && (meaningSpaceId === null || typeof data.meaningSpaceId !== "number")) || !tags || !personal) return null;
   return {
     term,status: status as WordStatus,meaning: text(data.meaning),
     exampleSentence: text(data.exampleSentence),englishTranslation: text(data.englishTranslation),
-    englishExampleSentence: text(data.englishExampleSentence),meaningSpaceId,tags,
+    englishExampleSentence: text(data.englishExampleSentence),meaningSpaceId,tags,...personal,
   };
 }
 function importWordInput(value: unknown,label: string): { input: WordInput | null;error: string | null } {
@@ -39,14 +47,16 @@ function importWordInput(value: unknown,label: string): { input: WordInput | nul
   const invalidField = stringFields.find(field => data[field] !== undefined && typeof data[field] !== "string");
   if (invalidField) return { input: null,error: `${label}: Das Feld „${invalidField}“ muss Text enthalten.` };
   const tags = textList(data.tags);
+  const personal = personalInput(data);
   if (!text(data.term)) return { input: null,error: `${label} benötigt das Feld „term“.` };
   if (data.status !== undefined && !WORD_STATUSES.includes(data.status as WordStatus))
     return { input: null,error: `${label}: „status“ muss draft, learning oder ready sein.` };
   if (!tags) return { input: null,error: `${label}: „tags“ muss eine Liste aus Texten sein.` };
+  if (!personal) return { input: null,error: `${label}: Die persönliche Einordnung ist ungültig oder unvollständig.` };
   return { input: {
     term: text(data.term),status: (data.status ?? "draft") as WordStatus,meaning: text(data.meaning),
     exampleSentence: text(data.exampleSentence),englishTranslation: text(data.englishTranslation),
-    englishExampleSentence: text(data.englishExampleSentence),meaningSpaceId: null,tags,
+    englishExampleSentence: text(data.englishExampleSentence),meaningSpaceId: null,tags,...personal,
   },error: null };
 }
 export function parseImportInput(body: unknown): { input: WordImportInput | null;error: string | null } {

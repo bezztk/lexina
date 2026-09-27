@@ -760,6 +760,11 @@ blockquote {
 .word-card-meta { display: flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: 0.45rem; }
 .word-card-meta .tags { justify-content: flex-end; margin: 0 !important; }
 .word-card-meta .tags span { padding: 0.1rem 0.32rem; }
+.personal-status-badge { display: inline-flex; align-items: baseline; gap: 0.3rem; padding: 0.16rem 0.42rem; border: 1px solid #898b58; border-radius: 2px; background: rgba(125,129,70,0.13); color: #5f6136; white-space: nowrap; }
+.personal-status-badge > small:first-child { color: #77784a; font-size: 0.62rem; font-weight: 600; text-transform: uppercase; }
+.personal-status-badge strong { font-size: 0.72rem; }
+.personal-status-badge > small:last-child:not(:first-child) { color: #77784a; font-size: 0.68rem; }
+.personal-status-unclassified { border-color: #b1ad7c; background: rgba(125,129,70,0.06); color: #777654; }
 .inline-word-meaning { overflow: hidden; color: #596372; font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
 .card-main .word-detail-line { display: flex; min-height: 1.15rem; gap: 0.35rem; margin: 0.18rem 0 0; color: #596372; font-size: 0.78rem; line-height: 1.3; }
 .detail-label { flex: 0 0 auto; color: #384252; font-weight: 650; }
@@ -843,7 +848,20 @@ blockquote {
 .space-picker-option { display: flex; width: 100%; justify-content: space-between; text-align: left; }
 .space-picker-option.selected { border-color: #315bd6; background: #edf1ff; color: #2448af; }
 .word-primary-fields { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(9rem, 1fr); gap: 0.9rem; }
-.language-section { display: grid; gap: 0.65rem; padding: 0.75rem; border: 1px solid #d8dce2; background: #f8f9fa; }
+.language-section { display: grid; gap: 0.65rem; padding: 0.75rem; border: 1px solid #8f915b; background: rgba(202,178,128,0.28); }
+.personal-word-section { display: grid; gap: 0.65rem; padding: 0.75rem; border: 1px solid #8f915b; background: rgba(202,178,128,0.28); }
+#word-personal-strength { display: grid; gap: 0.4rem; }
+#word-personal-strength[hidden] { display: none; }
+#word-personal-strength > span { color: #685641; font-size: 0.82rem; font-weight: 650; }
+.personal-strength-options { display: flex; }
+.personal-strength-options label { flex: 1; }
+.personal-strength-options input { position: absolute; opacity: 0; pointer-events: none; }
+.personal-strength-options label span { display: block; padding: 0.55rem 0.65rem; border: 1px solid #9fa06b; background: rgba(244,234,213,0.55); text-align: center; cursor: pointer; }
+.personal-strength-options label + label span { margin-left: -1px; }
+.personal-strength-options label:first-child span { border-radius: 2px 0 0 2px; }
+.personal-strength-options label:last-child span { border-radius: 0 2px 2px 0; }
+.personal-strength-options input:checked + span { position: relative; z-index: 1; border-color: #777a45; background: rgba(125,129,70,0.2); color: #595b31; font-weight: 700; }
+.personal-strength-options input:focus-visible + span { outline: 2px solid #777a45; outline-offset: 2px; }
 #quote-form textarea[name="content"] { height: 7.25rem; min-height: 7.25rem; overflow-y: auto; resize: none; }
 #journal-form textarea[name="content"] { height: 7.25rem; min-height: 7.25rem; overflow-y: auto; resize: none; }
 .editor-error { background: #fff1f1; color: #8e252b; padding: 0.65rem; border-left: 3px solid #aa2f35; }
@@ -857,6 +875,7 @@ button:disabled { opacity: 0.45; cursor: default; }
   .word-filters { justify-content: flex-end; flex-wrap: wrap; }
   .word-heading-actions, .word-search-wrap { width: 100%; max-width: none; }
   .word-primary-fields { grid-template-columns: 1fr; }
+  .word-card-meta { align-items: flex-end; flex-direction: column; }
   .quote-card-header { flex-wrap: wrap; gap: 0.45rem; }
   .meaning-group-header, .meaning-card-summary { align-items: start; flex-direction: column; gap: 0.3rem; }
   .meaning-card-links { flex-wrap: wrap; }
@@ -921,7 +940,7 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 dialog { border-color: #9f8768; background: #f4ead5; box-shadow: 0 24px 70px rgba(67, 48, 29, 0.34); }
 dialog::backdrop { background: rgba(54, 44, 34, 0.58); }
 .modal-header, .modal-footer { border-color: #c8b89d; background: rgba(235, 221, 193, 0.72); }
-.language-section { border-color: #c5b394; background: rgba(226, 209, 177, 0.28); }
+.language-section, .personal-word-section { border-color: #8f915b; background: rgba(202,178,128,0.28); }
 label, legend { color: #685641; }
 
 .list, .word-inventory-toolbar, .text-section-switch { border-color: #b9a588; }

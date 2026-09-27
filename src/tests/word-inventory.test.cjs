@@ -3,23 +3,46 @@ const assert = require("node:assert/strict");
 const { mkdtempSync,rmSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const path = require("node:path");
+const Database = require("better-sqlite3");
 
 const directory = mkdtempSync(path.join(tmpdir(),"lexina-tests-"));
 process.env.LEXINA_DATABASE_PATH = path.join(directory,"inventory.sqlite");
+const legacy = new Database(process.env.LEXINA_DATABASE_PATH);
+legacy.exec(`
+  CREATE TABLE meaning_spaces (id INTEGER PRIMARY KEY,label TEXT NOT NULL,explanation TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+  CREATE TABLE word_units (
+    id INTEGER PRIMARY KEY,term TEXT NOT NULL,meaning TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'draft',example_sentence TEXT NOT NULL DEFAULT '',
+    english_translation TEXT NOT NULL DEFAULT '',english_example_sentence TEXT NOT NULL DEFAULT '',
+    meaning_space_id INTEGER REFERENCES meaning_spaces(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  INSERT INTO word_units(term,meaning) VALUES ('Bestandswort','bleibt bei der Migration erhalten');
+`);
+legacy.close();
 
 const repo = require("../dist/server/repositories/word-repository.js");
 const { db } = require("../dist/server/database/db.js");
 const input = (term,extras = {}) => ({
   term,meaning: "",status: "draft",exampleSentence: "",
-  englishTranslation: "",englishExampleSentence: "",meaningSpaceId: null,tags: [],...extras,
+  englishTranslation: "",englishExampleSentence: "",meaningSpaceId: null,
+  personalStatus: "unclassified",personalStrength: null,tags: [],...extras,
+});
+
+test("personal fields migrate additively without losing existing words",() => {
+  const legacyWord = repo.listWords().find(word => word.term === "Bestandswort");
+  assert.ok(legacyWord);
+  assert.equal(legacyWord.personalStatus,"unclassified");
+  assert.equal(legacyWord.personalStrength,null);
+  assert.equal(repo.deleteWord(legacyWord.id),true);
 });
 
 test("word schema stores one German example and one English translation pair directly",() => {
   const columns = db.prepare("PRAGMA table_info(word_units)").all().map(column => column.name);
-  assert.deepEqual(columns,[
+  assert.deepEqual(columns.toSorted(),[
     "id","term","meaning","status","example_sentence",
-    "english_translation","english_example_sentence","meaning_space_id","created_at",
-  ]);
+    "english_translation","english_example_sentence","meaning_space_id","personal_status","personal_strength","created_at",
+  ].toSorted());
   for (const table of ["unit_examples","translations","space_words","words","similar_words","example_sentences"]) {
     assert.equal(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table),undefined);
   }
@@ -39,6 +62,16 @@ test("word schema stores one German example and one English translation pair dir
     english_translation: "carefully",
     english_example_sentence: "She opened the door carefully.",
   });
+});
+
+test("personal classification is separate and strength only persists for describes me",() => {
+  const word = repo.createWord(input("feinsinnig",{ personalStatus: "describes_me",personalStrength: "clear" }));
+  assert.equal(word.personalStatus,"describes_me");
+  assert.equal(word.personalStrength,"clear");
+  const reduced = repo.updateWord(word.id,input("feinsinnig",{ personalStatus: "reduce",personalStrength: "strong" }));
+  assert.equal(reduced.personalStatus,"reduce");
+  assert.equal(reduced.personalStrength,null);
+  assert.throws(() => db.prepare("UPDATE word_units SET personal_status='describes_me',personal_strength=NULL WHERE id=?").run(word.id),/Ungültige persönliche Einordnung/);
 });
 
 test("a word stores at most one meaning space and replacing it overwrites the direct foreign key",() => {
@@ -92,22 +125,29 @@ test("HTTP validates and persists the simplified word shape alongside other cont
     const created = await request("/api/words","POST",{
       term: "schnell",status: "draft",meaning: "mit hohem Tempo",exampleSentence: "Er läuft schnell.",
       englishTranslation: "fast",englishExampleSentence: "He runs fast.",meaningSpaceId: space.data.id,tags: ["Test"],
+      personalStatus: "describes_me",personalStrength: "strong",
     });
     assert.equal(created.status,201);
     assert.equal(created.data.englishTranslation,"fast");
     assert.equal(created.data.exampleSentence,"Er läuft schnell.");
     assert.equal(created.data.meaningSpaceId,space.data.id);
+    assert.equal(created.data.personalStatus,"describes_me");
+    assert.equal(created.data.personalStrength,"strong");
     assert.deepEqual(created.data.tags,["Test"]);
     assert.equal("language" in created.data,false);
     assert.equal("translations" in created.data,false);
     assert.equal((await request("/api/words","POST",{ term: " " })).status,400);
+    assert.equal((await request("/api/words","POST",{ term: "unvollständig",personalStatus: "describes_me" })).status,400);
 
     const updated = await request("/api/words/" + created.data.id,"PUT",{
       ...created.data,exampleSentence: "Sie antwortete schnell.",englishTranslation: "quickly",
       englishExampleSentence: "She answered quickly.",
+      personalStatus: "develop",personalStrength: "strong",
     });
     assert.equal(updated.status,200);
     assert.equal(updated.data.englishTranslation,"quickly");
+    assert.equal(updated.data.personalStatus,"develop");
+    assert.equal(updated.data.personalStrength,null);
 
     const invalidImport = await request("/api/words/import","POST",{
       meanings: [{ label: "Gefühle",explanation: "Emotionen",words: [{ term: "freudig" },{ term: "" }] }],

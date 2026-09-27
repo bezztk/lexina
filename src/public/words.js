@@ -41,8 +41,9 @@ function statusBadge(word) {
   return word.status === "ready" ? "" : '<span class="inventory-status status-' + word.status + '">' + statusNames[word.status] + '</span>';
 }
 function personalStatusBadge(word) {
-  const strength = word.personalStrength ? '<small>' + personalStrengthNames[word.personalStrength] + '</small>' : "";
-  return '<span class="personal-status-badge personal-status-' + word.personalStatus + '"><small>Für mich</small><strong>' + personalStatusNames[word.personalStatus] + '</strong>' + strength + '</span>';
+  if (word.personalStatus === "unclassified") return "";
+  const strength = word.personalStrength ? '<span class="personal-strength-label">' + personalStrengthNames[word.personalStrength] + '</span>' : "";
+  return '<span class="personal-status-badge personal-status-' + word.personalStatus + '"><strong>' + personalStatusNames[word.personalStatus] + '</strong>' + strength + '</span>';
 }
 function wordCard(word,grouped = false) {
   const englishContent = [
@@ -85,11 +86,14 @@ function updateWordSpaceAction() {
 function updatePersonalStrengthVisibility() {
   const strengthSection = document.querySelector("#word-personal-strength");
   const relevant = wordForm.elements.personalStatus.value === "describes_me";
+  const strengthInputs = [...strengthSection.querySelectorAll('input[name="personalStrength"]')];
   strengthSection.hidden = !relevant;
-  strengthSection.querySelectorAll('input[name="personalStrength"]').forEach(input => {
+  strengthInputs.forEach(input => {
     input.required = relevant;
     if (!relevant) input.checked = false;
   });
+  if (relevant && !strengthInputs.some(input => input.checked))
+    strengthInputs.find(input => input.value === "partial").checked = true;
 }
 function openWordSpacePicker() {
   document.querySelector("#word-space-search").value = "";

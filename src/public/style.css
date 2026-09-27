@@ -723,7 +723,7 @@ blockquote {
 .word-section-switch { display: inline-flex; }
 .word-section-switch button { min-width: 7rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #69727f; }
 .word-section-switch button.active { border-color: #315bd6; color: #2448af; font-weight: 650; }
-.manual-add-switch { align-self: start; }
+.add-choice-list button { width: 100%; min-height: 2.75rem; text-align: left; }
 .word-filters { display: flex; align-items: center; gap: 0.45rem; padding-bottom: 0.35rem; }
 .word-filters[hidden] { display: none; }
 .word-filter-select { display: block; min-width: 8.5rem; }

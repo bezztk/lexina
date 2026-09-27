@@ -192,7 +192,6 @@ document.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.view) showView(button.dataset.view);
-  if (button.dataset.action === "new-word") openWordForm();
   if (button.dataset.action === "close-word") closeWordForm();
   if (button.dataset.action === "new-quote") openQuoteForm();
   if (button.dataset.action === "close-quote") closeQuoteForm();

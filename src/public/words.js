@@ -5,6 +5,7 @@ let selectedSpaceId = null;
 let selectedWordTag = "";
 const spaceDialog = () => document.querySelector("#space-dialog");
 const spaceForm = () => document.querySelector("#space-form");
+const wordAddDialog = () => document.querySelector("#word-add-dialog");
 const wordSpaceDialog = () => document.querySelector("#word-space-dialog");
 const wordImportDialog = () => document.querySelector("#word-import-dialog");
 const wordImportForm = () => document.querySelector("#word-import-form");
@@ -113,7 +114,6 @@ function openWordForm(word) {
   deleteButton.hidden = !word;
   deleteButton.dataset.deleteWord = word?.id || "";
   document.querySelector("#word-error").hidden = true;
-  document.querySelector("#word-dialog [data-manual-add-switch]").hidden = Boolean(word);
   if (!wordDialog.open) wordDialog.showModal();
   wordForm.elements.term.focus();
 }
@@ -156,7 +156,6 @@ function openSpaceForm(space) {
   deleteButton.hidden = !space;
   deleteButton.dataset.deleteSpace = space?.id || "";
   document.querySelector("#space-error").hidden = true;
-  document.querySelector("#space-dialog [data-manual-add-switch]").hidden = Boolean(space);
   spaceDialog().showModal();
   form.elements.label.focus();
 }
@@ -209,15 +208,18 @@ function initWordArea() {
     } catch (error) { showEditorError("#space-error",error); } finally { button.disabled = false; }
   });
   spaceDialog().addEventListener("click",event => { if (event.target === spaceDialog()) spaceDialog().close(); });
+  wordAddDialog().addEventListener("click",event => { if (event.target === wordAddDialog()) wordAddDialog().close(); });
   wordSpaceDialog().addEventListener("click",event => { if (event.target === wordSpaceDialog()) wordSpaceDialog().close(); });
   wordImportDialog().addEventListener("click",event => { if (event.target === wordImportDialog()) closeWordImport(); });
   document.addEventListener("click",async event => {
     const button = event.target.closest("button");
     if (!button) return;
     try {
-      if (button.dataset.action === "manual-space") { closeWordForm(); openSpaceForm(); }
-      if (button.dataset.action === "manual-word") { spaceDialog().close(); spaceForm().reset(); openWordForm(); }
-      if (button.dataset.action === "import-words") openWordImport();
+      if (button.dataset.action === "open-word-add") wordAddDialog().showModal();
+      if (button.dataset.action === "close-word-add") wordAddDialog().close();
+      if (button.dataset.action === "choose-new-word") { wordAddDialog().close(); openWordForm(); }
+      if (button.dataset.action === "choose-new-space") { wordAddDialog().close(); openSpaceForm(); }
+      if (button.dataset.action === "import-words") { if (wordAddDialog().open) wordAddDialog().close(); openWordImport(); }
       if (button.dataset.action === "close-word-import") closeWordImport();
       if (button.dataset.action === "copy-word-prompt") {
         await navigator.clipboard.writeText(document.querySelector("#word-import-prompt").value);

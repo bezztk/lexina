@@ -719,10 +719,11 @@ blockquote {
 .word-search-wrap { width: min(40%, 250px); margin: 0; }
 .word-search-wrap input { height: 2.25rem; font-size: calc(1rem - 1px); }
 #words-view > section { margin-top: 1rem; }
-.word-inventory-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.word-inventory-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; }
 .word-section-switch { display: inline-flex; }
 .word-section-switch button { min-width: 7rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #69727f; }
 .word-section-switch button.active { border-color: #315bd6; color: #2448af; font-weight: 650; }
+.manual-add-switch { align-self: start; }
 .word-filters { display: flex; align-items: center; gap: 0.45rem; padding-bottom: 0.35rem; }
 .word-filters[hidden] { display: none; }
 .word-filter-select { display: block; min-width: 8.5rem; }

@@ -23,8 +23,10 @@ async function loadWords() {
 function matchesWord(word) {
   const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();
   const status = document.querySelector("#word-status-filter").value;
+  const personalStatus = document.querySelector("#word-personal-status-filter").value;
   const haystack = [word.term,word.meaning,word.replaces,word.englishTranslation].join(" ").toLocaleLowerCase();
-  return (!query || haystack.includes(query)) && (!status || word.status === status) && (!selectedWordTag || word.tags.includes(selectedWordTag));
+  return (!query || haystack.includes(query)) && (!status || word.status === status)
+    && (!personalStatus || word.personalStatus === personalStatus) && (!selectedWordTag || word.tags.includes(selectedWordTag));
 }
 function renderWordTagFilter() {
   if (selectedWordTag && !state.tags.some(tag => tag.name === selectedWordTag)) selectedWordTag = "";
@@ -62,8 +64,6 @@ function wordCard(word,grouped = false) {
 }
 function renderWords() {
   const words = state.words.filter(matchesWord);
-  const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();
-  const filtersActive = query || document.querySelector("#word-status-filter").value || selectedWordTag;
   const wordGroups = state.spaces.map(space => ({ space,words: words.filter(word => word.meaningSpaceId === space.id) })).filter(group => group.words.length);
   const unassigned = words.filter(word => word.meaningSpaceId === null);
   const unassignedGroup = unassigned.length
@@ -72,11 +72,6 @@ function renderWords() {
   document.querySelector("#word-list").innerHTML = unassignedGroup + wordGroups.map(({ space,words: groupWords }) =>
     '<article class="meaning-word-group"><header class="meaning-group-header"><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button><p>' + escapeHtml(space.explanation) + '</p></header><div class="meaning-group-words">' + groupWords.map(word => wordCard(word,true)).join("") + "</div></article>"
   ).join("") || empty("Keine Wörter für diese Suche.");
-  const spaces = state.spaces.filter(space => !filtersActive || space.wordIds.some(id => words.some(word => word.id === id)));
-  document.querySelector("#space-list").innerHTML = spaces.map(space => {
-    const assignedWords = space.wordIds.map(id => words.find(word => word.id === id)).filter(Boolean);
-    return '<article class="card meaning-space-card"><div class="card-main"><div class="meaning-card-summary"><div class="meaning-card-links"><h3><button class="space-link" data-edit-space="' + space.id + '">' + escapeHtml(space.label) + '</button></h3><div class="meaning-assigned-words">' + assignedWords.map(word => '<button class="word-link" data-edit-word="' + word.id + '">' + escapeHtml(word.term) + '</button>').join('<span aria-hidden="true">·</span>') + '</div></div><p title="' + escapeHtml(space.explanation) + '">' + escapeHtml(space.explanation) + '</p></div></div></article>';
-  }).join("") || empty("Keine Bedeutungen für diese Suche.");
 }
 function renderSpaceOptions() {
   const query = document.querySelector("#word-space-search").value.trim().toLocaleLowerCase();
@@ -118,6 +113,7 @@ function openWordForm(word) {
   deleteButton.hidden = !word;
   deleteButton.dataset.deleteWord = word?.id || "";
   document.querySelector("#word-error").hidden = true;
+  document.querySelector("#word-dialog [data-manual-add-switch]").hidden = Boolean(word);
   if (!wordDialog.open) wordDialog.showModal();
   wordForm.elements.term.focus();
 }
@@ -152,6 +148,7 @@ async function saveWordEditor() {
 }
 function openSpaceForm(space) {
   const form = spaceForm();
+  document.querySelector("#space-dialog-title").textContent = space ? "Bedeutung bearbeiten" : "Bedeutung hinzufügen";
   form.elements.id.value = space?.id || "";
   form.elements.label.value = space?.label || "";
   form.elements.explanation.value = space?.explanation || "";
@@ -159,6 +156,7 @@ function openSpaceForm(space) {
   deleteButton.hidden = !space;
   deleteButton.dataset.deleteSpace = space?.id || "";
   document.querySelector("#space-error").hidden = true;
+  document.querySelector("#space-dialog [data-manual-add-switch]").hidden = Boolean(space);
   spaceDialog().showModal();
   form.elements.label.focus();
 }
@@ -166,6 +164,7 @@ function initWordArea() {
   wordForm.elements.personalStatus.addEventListener("change",updatePersonalStrengthVisibility);
   document.querySelector("#word-search").addEventListener("input",renderWords);
   document.querySelector("#word-status-filter").addEventListener("change",renderWords);
+  document.querySelector("#word-personal-status-filter").addEventListener("change",renderWords);
   document.querySelector("#word-tag-filter").addEventListener("change",event => {
     selectedWordTag = event.target.value;
     renderWordTagFilter(); renderWords();
@@ -174,18 +173,6 @@ function initWordArea() {
     selectedWordTag = "";
     renderWordTagFilter(); renderWords();
   });
-  document.querySelectorAll("[data-word-section]").forEach(button => button.addEventListener("click",() => {
-    const section = button.dataset.wordSection;
-    document.querySelectorAll("[data-word-section]").forEach(item => {
-      item.classList.toggle("active",item === button); item.setAttribute("aria-selected",String(item === button));
-    });
-    document.querySelector(".word-filters").hidden = section !== "inventory";
-    document.querySelector('[data-action="import-words"]').hidden = section !== "inventory";
-    document.querySelector('[data-action="new-word"]').hidden = section !== "inventory";
-    document.querySelector('[data-action="new-space"]').hidden = section !== "meanings";
-    document.querySelector("#word-overview").hidden = section !== "inventory";
-    document.querySelector("#meaning-overview").hidden = section !== "meanings";
-  }));
   document.querySelector("#word-space-search").addEventListener("input",renderSpaceOptions);
   wordForm.addEventListener("submit",async event => {
     event.preventDefault();
@@ -228,7 +215,8 @@ function initWordArea() {
     const button = event.target.closest("button");
     if (!button) return;
     try {
-      if (button.dataset.action === "new-space") openSpaceForm();
+      if (button.dataset.action === "manual-space") { closeWordForm(); openSpaceForm(); }
+      if (button.dataset.action === "manual-word") { spaceDialog().close(); spaceForm().reset(); openWordForm(); }
       if (button.dataset.action === "import-words") openWordImport();
       if (button.dataset.action === "close-word-import") closeWordImport();
       if (button.dataset.action === "copy-word-prompt") {

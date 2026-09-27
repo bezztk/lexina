@@ -1,5 +1,5 @@
 const statusNames = { draft: "Entwurf", learning: "Lernen", ready: "Abgeschlossen" };
-const personalStatusNames = { unclassified: "Nicht eingeordnet",describes_me: "Beschreibt mich",develop: "Möchte ich entwickeln",reduce: "Möchte ich reduzieren",replace: "Möchte ich ersetzen",boundary: "Abgrenzung" };
+const personalStatusNames = { unclassified: "Nicht eingeordnet",describes_me: "Beschreibt mich",develop: "Möchte ich entwickeln",reduce: "Möchte ich reduzieren",replace: "Möchte ich ersetzen",boundary: "Davon grenze ich mich ab" };
 const personalStrengthNames = { partial: "Teilweise",clear: "Deutlich",strong: "Stark" };
 let selectedSpaceId = null;
 let selectedWordTag = "";

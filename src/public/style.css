@@ -939,11 +939,13 @@ dialog { border-color: #9f8768; background: #f4ead5; box-shadow: 0 24px 70px rgb
 dialog::backdrop { background: rgba(54, 44, 34, 0.58); }
 .modal-header, .modal-footer { border-color: #c8b89d; background: rgba(235, 221, 193, 0.72); }
 #word-dialog {
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.045 .24' numOctaves='3' seed='11'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.11'/%3E%3C/svg%3E"),
-    repeating-linear-gradient(94deg, transparent 0 22px, rgba(107,72,43,0.025) 23px, transparent 24px 46px),
-    radial-gradient(circle at 18% 12%, rgba(255,241,211,0.24), transparent 33rem),
-    linear-gradient(112deg, #e5cfaa 0%, #dcbf94 52%, #e2c7a0 100%);
+  background-color: #cdb994;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .22' numOctaves='3' seed='11'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.2'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(94deg, transparent 0 22px, rgba(86, 72, 53, 0.025) 23px, transparent 24px 46px),
+    radial-gradient(circle at 18% 12%, rgba(255, 241, 207, 0.46), transparent 33rem),
+    linear-gradient(112deg, #d8c39e 0%, #c7ae83 52%, #d4bc94 100%);
+  background-attachment: fixed;
 }
 #word-dialog .modal-header, #word-dialog .modal-footer { background: rgba(239,229,207,0.34); border-color: rgba(112,88,59,0.34); }
 #word-dialog .modal-body { background: transparent; }

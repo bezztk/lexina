@@ -12,3 +12,7 @@ npm start
 ```
 
 Anschließend: `http://localhost:3000`
+
+## Sprachbausteine
+
+Die optionale statische Konfiguration für den Grammatik-/Sprachbaustein-Bereich wird unter `src/public/data/language-blocks.json` erwartet. Fehlt die Datei oder entspricht sie nicht dem vorgesehenen Schema, bleibt der Bereich ausgeblendet und die übrige Wörteransicht funktioniert unverändert.

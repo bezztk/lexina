@@ -14,12 +14,45 @@ function showEditorError(selector,error) {
   element.textContent = error.message || "Die Änderung konnte nicht gespeichert werden.";
   element.hidden = false;
 }
+function validateLanguageBlocks(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)
+    || Object.keys(value).some(key => key !== "groups") || !Array.isArray(value.groups))
+    throw new Error("Die Datei muss ausschließlich eine Liste „groups“ enthalten.");
+  return value.groups.map((group,index) => {
+    if (!group || typeof group !== "object" || Array.isArray(group)
+      || Object.keys(group).some(key => key !== "title" && key !== "words")
+      || typeof group.title !== "string" || !group.title.trim() || !Array.isArray(group.words)
+      || group.words.some(word => typeof word !== "string" || !word.trim()))
+      throw new Error(`Gruppe ${index + 1} benötigt ausschließlich einen Titel und eine Liste nicht leerer Wörter.`);
+    return { title: group.title,words: [...group.words] };
+  });
+}
+async function loadLanguageBlocks() {
+  const section = document.querySelector("#language-blocks");
+  section.hidden = true;
+  document.querySelector("#language-block-list").replaceChildren();
+  try {
+    const response = await fetch("/data/language-blocks.json",{ cache: "no-cache" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const groups = validateLanguageBlocks(await response.json());
+    if (!groups.length) return;
+    document.querySelector("#language-block-list").innerHTML = groups.map(group =>
+      '<article class="language-block-group"><h3>' + escapeHtml(group.title) + '</h3><div class="language-block-words">' +
+      group.words.map(word => '<span>' + escapeHtml(word) + '</span>').join("") + "</div></article>"
+    ).join("");
+    section.hidden = false;
+  } catch (error) {
+    console.error("Sprachbausteine konnten nicht geladen werden.",error);
+  }
+}
 async function loadWords() {
+  const languageBlocks = loadLanguageBlocks();
   try {
     [state.words,state.spaces] = await Promise.all([api("/api/words"),api("/api/spaces"),loadTags()]);
     renderWordTagFilter();
     renderWords();
   } catch (error) { notify(error.message); }
+  await languageBlocks;
 }
 function matchesWord(word) {
   const query = document.querySelector("#word-search").value.trim().toLocaleLowerCase();

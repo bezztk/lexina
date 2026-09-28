@@ -735,6 +735,14 @@ blockquote {
 .selected-word-tag button { width: 1.8rem; min-height: 1.9rem; padding: 0; border: 0; border-left: 1px solid #c6d1f6; background: transparent; color: inherit; }
 .text-section-switch { width: fit-content; margin-bottom: 1rem; }
 .word-section-panel[hidden] { display: none; }
+.language-blocks[hidden] { display: none; }
+.language-blocks { padding: 0.65rem 0.75rem; border: 1px solid #c3b195; background: rgba(249,242,225,0.62); }
+.language-blocks > h2 { margin: 0 0 0.45rem; color: #5f4b38; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.language-block-list { display: grid; gap: 0.35rem; }
+.language-block-group { display: flex; align-items: baseline; gap: 0.7rem; }
+.language-block-group h3 { min-width: 7rem; margin: 0; color: #493a2c; font-size: 0.82rem; }
+.language-block-words { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.language-block-words span { padding: 0.08rem 0.35rem; border: 1px solid #c0ad90; background: rgba(239,226,201,0.62); color: #665440; font-size: 0.75rem; }
 .grouped-word-list { display: grid; gap: 0.85rem; }
 .meaning-word-group { overflow: hidden; border: 1px solid #cfd4dc; background: rgba(255,255,255,0.72); }
 .meaning-group-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.65rem 0.8rem; border-bottom: 1px solid #cfd4dc; background: #f8f9fa; }
@@ -877,6 +885,8 @@ button:disabled { opacity: 0.45; cursor: default; }
   .word-card-meta { align-items: flex-end; flex-direction: column; }
   .quote-card-header { flex-wrap: wrap; gap: 0.45rem; }
   .meaning-group-header, .meaning-card-summary { align-items: start; flex-direction: column; gap: 0.3rem; }
+  .language-block-group { align-items: flex-start; flex-direction: column; gap: 0.2rem; }
+  .language-block-group h3 { min-width: 0; }
   .meaning-card-links { flex-wrap: wrap; }
   .meaning-group-header > p, .meaning-card-summary p { text-align: left; }
   .vocabulary-entry-content { grid-template-columns: 1fr; gap: 0.2rem; }

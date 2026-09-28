@@ -3,6 +3,8 @@ const personalStatusNames = { unclassified: "Nicht eingeordnet",describes_me: "B
 const personalStrengthNames = { partial: "Teilweise",clear: "Deutlich",strong: "Stark" };
 let selectedSpaceId = null;
 let selectedWordTag = "";
+let selectedWordLibrarySection = "words";
+let languageBlocksAvailable = false;
 const spaceDialog = () => document.querySelector("#space-dialog");
 const spaceForm = () => document.querySelector("#space-form");
 const wordAddDialog = () => document.querySelector("#word-add-dialog");
@@ -27,9 +29,21 @@ function validateLanguageBlocks(value) {
     return { title: group.title,words: [...group.words] };
   });
 }
+function renderWordLibrarySection() {
+  const showLanguageBlocks = selectedWordLibrarySection === "language-blocks";
+  document.querySelectorAll("[data-word-library-section]").forEach(button => {
+    const active = button.dataset.wordLibrarySection === selectedWordLibrarySection;
+    button.classList.toggle("active",active);
+    button.setAttribute("aria-selected",String(active));
+  });
+  document.querySelector("#word-overview").hidden = showLanguageBlocks;
+  document.querySelector("#language-blocks").hidden = !showLanguageBlocks || !languageBlocksAvailable;
+  document.querySelector(".word-filters").hidden = showLanguageBlocks;
+  document.querySelector(".word-heading-actions").hidden = showLanguageBlocks;
+}
 async function loadLanguageBlocks() {
-  const section = document.querySelector("#language-blocks");
-  section.hidden = true;
+  languageBlocksAvailable = false;
+  renderWordLibrarySection();
   document.querySelector("#language-block-list").replaceChildren();
   try {
     const response = await fetch("/data/language-blocks.json",{ cache: "no-cache" });
@@ -40,9 +54,11 @@ async function loadLanguageBlocks() {
       '<article class="language-block-group"><h3>' + escapeHtml(group.title) + '</h3><div class="language-block-words">' +
       group.words.map(word => '<span>' + escapeHtml(word) + '</span>').join("") + "</div></article>"
     ).join("");
-    section.hidden = false;
+    languageBlocksAvailable = true;
+    renderWordLibrarySection();
   } catch (error) {
     console.error("Sprachbausteine konnten nicht geladen werden.",error);
+    renderWordLibrarySection();
   }
 }
 async function loadWords() {
@@ -197,6 +213,10 @@ function initWordArea() {
   document.querySelector("#word-search").addEventListener("input",renderWords);
   document.querySelector("#word-status-filter").addEventListener("change",renderWords);
   document.querySelector("#word-personal-status-filter").addEventListener("change",renderWords);
+  document.querySelectorAll("[data-word-library-section]").forEach(button => button.addEventListener("click",() => {
+    selectedWordLibrarySection = button.dataset.wordLibrarySection;
+    renderWordLibrarySection();
+  }));
   document.querySelector("#word-tag-filter").addEventListener("change",event => {
     selectedWordTag = event.target.value;
     renderWordTagFilter(); renderWords();

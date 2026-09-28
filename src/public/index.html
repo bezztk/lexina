@@ -28,6 +28,7 @@
       <section id="words-view" class="view active">
         <div class="view-heading"><h1>Wörter</h1><div class="heading-actions word-heading-actions"><div class="word-search-wrap"><label class="visually-hidden" for="word-search">Wörter durchsuchen</label><input id="word-search" type="search" placeholder="Wort oder Bedeutung suchen" /></div><button class="primary" data-action="open-word-add">Hinzufügen</button></div></div>
         <div class="word-inventory-toolbar">
+          <div class="word-section-switch" role="tablist" aria-label="Wörterbereich"><button class="active" type="button" role="tab" aria-selected="true" data-word-library-section="words">Wörter</button><button type="button" role="tab" aria-selected="false" data-word-library-section="language-blocks">Sprachbausteine</button></div>
           <div class="word-filters" aria-label="Wörter filtern">
             <label class="word-filter-select"><span class="visually-hidden">Status</span><select id="word-status-filter" aria-label="Nach Status filtern"><option value="">Alle Status</option><option value="draft">Entwurf</option><option value="learning">Lernen</option><option value="ready">Abgeschlossen</option></select></label>
             <label class="word-filter-select"><span class="visually-hidden">Persönlicher Status</span><select id="word-personal-status-filter" aria-label="Nach persönlichem Status filtern"><option value="">Alle persönlichen Status</option><option value="unclassified">Nicht eingeordnet</option><option value="describes_me">Beschreibt mich</option><option value="develop">Möchte ich entwickeln</option><option value="reduce">Möchte ich reduzieren</option><option value="replace">Möchte ich ersetzen</option><option value="boundary">Davon grenze ich mich ab</option></select></label>
@@ -35,8 +36,8 @@
             <div id="word-tag-selection" class="selected-word-tag" hidden><span></span><button type="button" data-clear-word-tag aria-label="Tagfilter entfernen">×</button></div>
           </div>
         </div>
-        <section id="language-blocks" class="language-blocks" aria-labelledby="language-blocks-title" hidden><h2 id="language-blocks-title">Sprachbausteine</h2><div id="language-block-list" class="language-block-list"></div></section>
         <section id="word-overview" class="word-section-panel" aria-label="Wörter"><div id="word-list" class="grouped-word-list"></div></section>
+        <section id="language-blocks" class="language-blocks" aria-labelledby="language-blocks-title" hidden><h2 id="language-blocks-title">Sprachbausteine</h2><div id="language-block-list" class="language-block-list"></div></section>
       </section>
 
       <dialog id="word-add-dialog" class="compact-dialog" aria-labelledby="word-add-dialog-title">
